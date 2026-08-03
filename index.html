@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CODEX-RESET-LIKELIHOOD — measured resets, stated risk</title>
+<meta name="description" content="Objective detection of OpenAI Codex bonus quota resets, read from account rate-limit state rather than inferred from tweets. Facts and inference kept on separate tracks.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@400;700;800&family=Azeret+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#ffffff;
+  --ground:#000000;
+  --hair:rgba(255,255,255,.22);
+  --hair-soft:rgba(255,255,255,.10);
+  --unit:4px;
+  --display:"Martian Mono",ui-monospace,monospace;
+  --data:"Azeret Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--data);
+  font-weight:300;
+  font-size:12px;
+  line-height:1.5;
+  letter-spacing:.02em;
+  overflow-x:hidden;
+}
+canvas#field{position:fixed;inset:0;width:100%;height:100%;z-index:0;opacity:.5;pointer-events:none}
+.shell{position:relative;z-index:1}
+a{color:inherit}
+
+/* ─── rules & type ─────────────────────────────── */
+.rule{height:1px;background:var(--hair);border:0}
+.lbl{font-family:var(--data);font-weight:600;font-size:10px;letter-spacing:.18em;text-transform:uppercase}
+.dim{opacity:.55}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.01em;text-transform:uppercase}
+
+/* ─── barcode strip component ──────────────────── */
+.bars{display:flex;align-items:stretch;gap:1px;height:100%;min-height:14px}
+.bars i{display:block;background:var(--ink)}
+
+/* ─── top bar ──────────────────────────────────── */
+header{border-bottom:1px solid var(--hair);position:sticky;top:0;background:rgba(0,0,0,.92);backdrop-filter:blur(2px);z-index:5}
+.topbar{display:flex;align-items:center;gap:16px;padding:10px 16px;flex-wrap:wrap}
+.wordmark{font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.04em;white-space:nowrap}
+nav{display:flex;gap:14px;margin-left:auto;flex-wrap:wrap}
+nav a{text-decoration:none;font-size:10px;letter-spacing:.16em;text-transform:uppercase;opacity:.6;padding:2px 0;border-bottom:1px solid transparent}
+nav a:hover,nav a:focus-visible{opacity:1;border-bottom-color:var(--ink)}
+.clock{font-size:10px;letter-spacing:.1em;opacity:.6;white-space:nowrap}
+
+/* ─── synthetic-data banner ────────────────────── */
+.synthetic{
+  display:flex;gap:10px;align-items:center;
+  padding:7px 16px;border-bottom:1px solid var(--hair);
+  background:var(--ink);color:var(--ground);
+  font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+}
+.synthetic .bars i{background:var(--ground)}
+
+/* ─── layout ───────────────────────────────────── */
+main{max-width:1600px;margin:0 auto;padding:0 16px 80px}
+section{padding:34px 0;border-bottom:1px solid var(--hair-soft)}
+.sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:20px}
+.sec-head .idx{font-family:var(--display);font-weight:700;font-size:11px;opacity:.45}
+.sec-head h2{font-size:13px}
+.sec-head .note{margin-left:auto;font-size:10px;opacity:.5;letter-spacing:.1em;text-transform:uppercase}
+
+/* ─── 01 dual track ────────────────────────────── */
+.dual{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:24px;align-items:start}
+.verdict{border:1px solid var(--hair);padding:16px}
+.verdict.fact{background:var(--ink);color:var(--ground)}
+.verdict.fact .bars i{background:var(--ground)}
+.verdict-k{font-size:10px;letter-spacing:.18em;text-transform:uppercase;opacity:.7;margin-bottom:8px}
+.verdict-v{font-family:var(--display);font-weight:800;font-size:clamp(20px,3.4vw,34px);line-height:1.05}
+.verdict-sub{margin-top:10px;font-size:11px;line-height:1.6}
+.track-wrap{border:1px solid var(--hair);padding:14px 14px 8px}
+.track-lbl{display:flex;gap:10px;align-items:center;font-size:10px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:6px}
+.track-lbl .chip{border:1px solid var(--hair);padding:1px 6px}
+.track-lbl .chip.solid{background:var(--ink);color:var(--ground);border-color:var(--ink)}
+.stream{border:1px solid var(--hair);border-top:0;padding:12px 14px}
+.stream table{width:100%;border-collapse:collapse;font-size:10.5px}
+.stream th,.stream td{padding:2px 0;text-align:right;border-bottom:1px solid rgba(255,255,255,.06);white-space:nowrap}
+.stream th:first-child,.stream td:first-child{text-align:left}
+.stream th{font-size:9px;letter-spacing:.14em;text-transform:uppercase;opacity:.45;font-weight:600}
+.stream td{opacity:.72}
+.stream tr.evt td{opacity:1;font-weight:600}
+.stream tr.evt td:last-child{background:var(--ink);color:var(--ground);padding:0 4px}
+.readouts{display:flex;flex-direction:column;gap:14px}
+.readout{border:1px solid var(--hair);padding:12px}
+.readout dl{display:grid;grid-template-columns:1fr auto;gap:4px 10px;margin-top:8px}
+.readout dt{opacity:.55;font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.readout dd{text-align:right}
+.big{font-family:var(--display);font-weight:800;font-size:26px;line-height:1}
+
+/* ─── 02 event log ─────────────────────────────── */
+.nodes{display:flex;flex-direction:column;gap:10px}
+.node{display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:14px;align-items:center;border:1px solid var(--hair);padding:10px 12px}
+.node:hover{background:rgba(255,255,255,.05)}
+.node .when{font-family:var(--display);font-weight:700;font-size:12px;white-space:nowrap}
+.node .meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:11px}
+.node .meta span{opacity:.65}
+.node .meta b{font-weight:600;opacity:1}
+.node .mx{display:grid;grid-template-columns:repeat(8,5px);gap:2px}
+.node .mx i{width:5px;height:5px;background:var(--ink);opacity:.16}
+.node .mx i.on{opacity:1}
+.node .mxk{font-size:9px;letter-spacing:.1em;opacity:.4;text-align:right;margin-bottom:3px}
+.interval{position:relative;height:18px;border-left:1px solid var(--hair);border-right:1px solid var(--hair)}
+.interval::before{content:"";position:absolute;left:0;right:0;top:8.5px;height:1px;background:var(--hair-soft)}
+.interval .tick{position:absolute;top:0;bottom:0;width:1px;background:var(--hair-soft)}
+.interval .fillbar{position:absolute;top:5px;height:8px;background:var(--ink);min-width:2px}
+.interval .hrs{position:absolute;left:0;right:0;bottom:-13px;display:flex;justify-content:space-between;font-size:9px;opacity:.35}
+
+/* ─── 03 matrix ────────────────────────────────── */
+.mx-wrap{display:flex;gap:8px;align-items:flex-start;overflow-x:auto;padding-bottom:6px}
+.mx-days{display:grid;grid-template-rows:repeat(7,11px);gap:2px;flex:none}
+.mx-days span{font-size:9px;line-height:11px;letter-spacing:.08em;opacity:.45}
+.matrix{display:grid;grid-template-rows:repeat(7,11px);grid-auto-flow:column;grid-auto-columns:11px;gap:2px;flex:none}
+.matrix i{width:11px;height:11px;border:1px solid var(--hair-soft)}
+.matrix i.hit{background:var(--ink);border-color:var(--ink)}
+.matrix i.void{border-color:transparent}
+.matrix i.today{outline:1px solid var(--ink);outline-offset:1px}
+.mx-legend{display:flex;gap:18px;margin-top:12px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.6;flex-wrap:wrap}
+.mx-legend span{display:flex;align-items:center;gap:6px}
+.mx-legend i{width:9px;height:9px;display:block;border:1px solid var(--hair)}
+.mx-legend i.hit{background:var(--ink);border-color:var(--ink)}
+
+/* ─── 04 scorecards ────────────────────────────── */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.card{border:1px solid var(--hair);padding:14px}
+.card h3{font-size:11px;margin-bottom:2px}
+.card .kind{font-size:10px;letter-spacing:.16em;text-transform:uppercase;opacity:.5;margin-bottom:12px}
+.card table{width:100%;border-collapse:collapse;font-size:11px}
+.card th,.card td{text-align:right;padding:4px 0;border-bottom:1px solid var(--hair-soft)}
+.card th:first-child,.card td:first-child{text-align:left;opacity:.6}
+.card th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;opacity:.5}
+.pending{border:1px solid var(--hair);padding:20px;text-align:center}
+.pending .big{margin-bottom:6px}
+
+/* ─── 05 method ────────────────────────────────── */
+.method{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.method h3{font-size:11px;margin-bottom:8px}
+.method p{font-size:11px;line-height:1.7;opacity:.75}
+.method code{font-family:var(--data);background:var(--ink);color:var(--ground);padding:0 3px}
+.rulebox{border:1px solid var(--hair);padding:12px;font-size:11px;line-height:1.8;margin-top:10px}
+.rulebox b{font-weight:600}
+
+footer{padding:24px 16px;border-top:1px solid var(--hair);display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.6}
+footer a{margin-left:auto}
+
+@media (max-width:860px){
+  .dual{grid-template-columns:1fr}
+  .node{grid-template-columns:1fr;gap:8px}
+  .node .mx{justify-self:start}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<!--
+THESIS: A measurement instrument for a rumour-driven event: bonus Codex resets read from account state, never inferred from tweets. It refuses the status-page arrangement — one green tick standing for a claim nobody can audit — and refuses colour as the carrier of meaning.
+OWN-WORLD: Pure black and pure white, no grey pigment and no hue. Three materials only: solid barcode bars (measured fact), hairline sine curves (computed inference), and 0/1 cell matrices (per-day state). Martian Mono at display scale, Azeret Mono at data density, tabular figures throughout.
+STORY: A developer who just hit the weekly cap learns, in one viewport, whether a bonus reset actually happened and how risky the next 24h is — and cannot mistake the second for the first.
+FIRST VIEWPORT: Full-bleed barcode field. Left: inverted verdict block (measured fact, solid). Right: risk readout (inference, hairline). Between them a dual-track chart — solid interval bars above, hairline hazard curve below — sharing one time axis.
+FORM: ikeda-datamatics (catalog challenger, taken over grounded candidate 4 on the user's pinned "Codex + technical" brief); seed key 3bea9a98.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
+<canvas id="field" aria-hidden="true"></canvas>
+
+<div class="shell">
+
+<header>
+  <div class="topbar">
+    <span class="wordmark">CODEX-RESET-LIKELIHOOD</span>
+    <span class="bars" style="width:132px;height:14px" aria-hidden="true" data-bars="34"></span>
+    <nav>
+      <a href="#now">FIELD</a>
+      <a href="#log">LOG</a>
+      <a href="#matrix">MATRIX</a>
+      <a href="#score">CALIBRATION</a>
+      <a href="#method">METHOD</a>
+      <a href="https://github.com/kiki830621/codex-reset-likelihood">SOURCE</a>
+    </nav>
+    <span class="clock num" id="clock">——</span>
+  </div>
+</header>
+
+<div class="synthetic">
+  <span class="bars" style="width:40px;height:11px" aria-hidden="true" data-bars="40"></span>
+  <span>Synthetic data — no observations collected yet. Every figure below is illustrative.</span>
+</div>
+
+<main>
+
+  <!-- 01 ─────────────────────────────────────────── -->
+  <section id="now">
+    <div class="sec-head">
+      <span class="idx">01</span>
+      <h2>Field</h2>
+      <span class="note">measured fact · computed inference</span>
+    </div>
+
+    <div class="dual">
+      <div>
+        <div class="track-wrap">
+          <div class="track-lbl">
+            <span class="chip solid">SOLID</span>
+            <span>Track A — observed resets (fact)</span>
+          </div>
+          <svg viewBox="0 0 1000 120" preserveAspectRatio="none" style="width:100%;height:96px;display:block" role="img" aria-label="Track A: twelve observed bonus resets between January and August 2026, each drawn as an interval bar rather than a point.">
+            <line x1="0" y1="100" x2="1000" y2="100" stroke="rgba(255,255,255,.22)" stroke-width="1"/>
+            <g fill="#fff" id="trackA"></g>
+          </svg>
+
+          <div class="track-lbl" style="margin-top:14px">
+            <span class="chip">HAIRLINE</span>
+            <span>Track B — 24h hazard rate (inference)</span>
+          </div>
+          <svg viewBox="0 0 1000 120" preserveAspectRatio="none" style="width:100%;height:96px;display:block" role="img" aria-label="Track B: computed 24-hour hazard rate over the same period, resetting to near zero after each observed event and climbing with elapsed days.">
+            <line x1="0" y1="110" x2="1000" y2="110" stroke="rgba(255,255,255,.22)" stroke-width="1"/>
+            <path id="trackB" fill="none" stroke="#fff" stroke-width="1.25"/>
+            <circle id="trackBnow" r="3.5" fill="#fff"/>
+          </svg>
+
+          <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;letter-spacing:.14em;opacity:.5">
+            <span>2026-01</span><span>2026-03</span><span>2026-05</span><span>2026-07</span>
+          </div>
+        </div>
+
+        <div class="stream">
+          <div class="track-lbl" style="margin-bottom:8px">
+            <span>Poll stream — raw observations behind Track A</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>observed_at (UTC)</th>
+                <th>weekly left</th>
+                <th>announced reset_at</th>
+                <th>Δ</th>
+                <th>verdict</th>
+              </tr>
+            </thead>
+            <tbody id="polls"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="readouts">
+        <div class="verdict fact">
+          <div class="verdict-k">Track A · measured</div>
+          <div class="verdict-v">NO BONUS<br>RESET</div>
+          <div class="verdict-sub">
+            Last observed <b>7 d 09 h</b> ago.<br>
+            Quota rose before its announced <code style="background:#000;color:#fff;padding:0 3px">reset_at</code> — the only signature that separates a bonus reset from an ordinary rollover.
+          </div>
+          <div class="bars" style="width:100%;height:16px;margin-top:12px" aria-hidden="true" data-bars="110"></div>
+        </div>
+
+        <div class="readout">
+          <div class="verdict-k dim">Track B · computed</div>
+          <div class="big num">18.4<span style="font-size:14px">%</span></div>
+          <div class="verdict-sub dim">Probability of a bonus reset within 24 h, given 7 days elapsed.</div>
+          <dl>
+            <dt>Model</dt><dd>Exponential</dd>
+            <dt>Events</dt><dd class="num">12</dd>
+            <dt>Mean interval</dt><dd class="num">17.1 d</dd>
+            <dt>80% CI</dt><dd class="num">9–31%</dd>
+          </dl>
+        </div>
+
+        <div class="readout">
+          <div class="verdict-k dim">Pipeline</div>
+          <dl>
+            <dt>Endpoint</dt><dd>NOMINAL</dd>
+            <dt>Schema</dt><dd>NO DRIFT</dd>
+            <dt>Collectors</dt><dd class="num">1</dd>
+            <dt>Last poll</dt><dd class="num">04 m ago</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 ─────────────────────────────────────────── -->
+  <section id="log">
+    <div class="sec-head">
+      <span class="idx">02</span>
+      <h2>Event log</h2>
+      <span class="note">append-only · every row reproducible from the public JSONL</span>
+    </div>
+    <div class="nodes" id="nodes"></div>
+  </section>
+
+  <!-- 03 ─────────────────────────────────────────── -->
+  <section id="matrix">
+    <div class="sec-head">
+      <span class="idx">03</span>
+      <h2>Day matrix</h2>
+      <span class="note">one cell per day · 2026-01-01 → today</span>
+    </div>
+    <div class="mx-wrap">
+      <div class="mx-days" aria-hidden="true">
+        <span>MON</span><span></span><span>WED</span><span></span><span>FRI</span><span></span><span>SUN</span>
+      </div>
+      <div class="matrix" id="mx" role="img" aria-label="Day matrix: one cell per day since 2026-01-01, arranged in columns of seven so each row is a weekday. Filled cells mark days on which a bonus reset was observed."></div>
+    </div>
+    <div class="mx-legend">
+      <span><i></i>no reset observed</span>
+      <span><i class="hit"></i>bonus reset observed</span>
+      <span id="mx-skew">weekday tally —</span>
+      <span>skew is a covariate candidate — not estimable at n=12</span>
+    </div>
+  </section>
+
+  <!-- 04 ─────────────────────────────────────────── -->
+  <section id="score">
+    <div class="sec-head">
+      <span class="idx">04</span>
+      <h2>Scorecards</h2>
+      <span class="note">two claims · two independent scores</span>
+    </div>
+    <div class="cards">
+      <div class="card">
+        <h3>Detection</h3>
+        <div class="kind">scores track A — fact</div>
+        <table>
+          <tr><th>metric</th><th>value</th></tr>
+          <tr><td>Median detection lag</td><td class="num">02 h 41 m</td></tr>
+          <tr><td>Worst lag</td><td class="num">06 h 12 m</td></tr>
+          <tr><td>Recall vs. later consensus</td><td class="num">11 / 12</td></tr>
+          <tr><td>False positives</td><td class="num">0</td></tr>
+        </table>
+        <p class="verdict-sub dim" style="margin-top:10px">Lag is bounded below by the poll interval: an event is only ever located inside an interval, never at an instant.</p>
+      </div>
+
+      <div class="card">
+        <h3>Calibration</h3>
+        <div class="kind">scores track B — inference</div>
+        <table>
+          <tr><th>claimed band</th><th>days</th><th>actual</th></tr>
+          <tr><td>00–10%</td><td class="num">96</td><td class="num">6.3%</td></tr>
+          <tr><td>10–20%</td><td class="num">71</td><td class="num">15.5%</td></tr>
+          <tr><td>20–30%</td><td class="num">38</td><td class="num">26.3%</td></tr>
+          <tr><td>30%+</td><td class="num">10</td><td class="num">30.0%</td></tr>
+        </table>
+        <p class="verdict-sub dim" style="margin-top:10px">Brier score <b class="num">0.081</b>. A site that cannot publish this table is asking to be believed rather than checked.</p>
+      </div>
+
+      <div class="card">
+        <h3>Coverage</h3>
+        <div class="kind">scores the evidence base</div>
+        <table>
+          <tr><th>source</th><th>state</th></tr>
+          <tr><td>Self-account anchor</td><td>ACTIVE · n=1</td></tr>
+          <tr><td>Social indicator</td><td>ADVISORY ONLY</td></tr>
+          <tr><td>Crowd reports</td><td>NOT YET OPEN</td></tr>
+        </table>
+        <p class="verdict-sub dim" style="margin-top:10px">At n=1 a staged rollout is invisible to this instrument. That limit is structural and is not fixed by more polling.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 ─────────────────────────────────────────── -->
+  <section id="method">
+    <div class="sec-head">
+      <span class="idx">05</span>
+      <h2>Method</h2>
+      <span class="note">what is measured, what is computed, what is refused</span>
+    </div>
+    <div class="method">
+      <div>
+        <h3>The discriminant</h3>
+        <p>Every usage response carries the weekly window's announced <code>reset_at</code>. An ordinary rollover is therefore predictable. A bonus reset is not:</p>
+        <div class="rulebox">
+          quota rises <b>AND</b> now &lt; previous <code>reset_at</code><br>→ <b>BONUS RESET</b><br><br>
+          quota rises <b>AND</b> now ≥ previous <code>reset_at</code><br>→ ordinary rollover, ignored
+        </div>
+        <p style="margin-top:10px">This is deterministic. No language model reads a tweet to produce Track A.</p>
+      </div>
+      <div>
+        <h3>Why tweets are advisory</h3>
+        <p>A post is a claim about an event, not the event. When a rollout is staged, or when nothing is announced, an instrument built on posts is blind and cannot know it. Social signals are kept out of the discriminant so that detection lag and recall remain measurable against something objective.</p>
+        <h3 style="margin-top:16px">Credentials</h3>
+        <p>The collector runs on your own machine and reads your own token. It uploads a signed, anonymous event — never a token, an account id, or a prompt. The server cannot leak what it never holds.</p>
+      </div>
+      <div>
+        <h3>Refusals</h3>
+        <p>Below three observed events, no risk figure is published at all — the field reads INSUFFICIENT DATA rather than a confident-looking number.</p>
+        <p style="margin-top:10px">If the upstream response stops matching its expected shape, every inference halts and the field says so. Silently continuing to serve numbers over a drifted schema is the failure this instrument exists to avoid.</p>
+        <p style="margin-top:10px">Claimed here: detection lag, recall, calibration. Not claimed: advance warning of any particular reset.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span>CODEX-RESET-LIKELIHOOD</span>
+  <span class="dim">Not affiliated with OpenAI</span>
+  <span class="dim">Event log is public and reproducible</span>
+  <a href="https://github.com/kiki830621/codex-reset-likelihood">GITHUB ↗</a>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* seeded PRNG — deterministic field, no Math.random */
+  function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+  /* ── illustrative event set: 12 resets, Jan–Aug 2026 ── */
+  var DAY0 = Date.UTC(2026,0,1);
+  var TODAY = Date.UTC(2026,7,4);
+  var SPAN = Math.round((TODAY-DAY0)/864e5);           // days on the axis
+  /* hour = start of the interval the event was located inside, in UTC.
+     w    = width of that interval in hours (poll gap). Both drive the
+     drawing directly; nothing about an event is decorative. */
+  var EVENTS = [
+    {day:17, hour:14.2, lag:"03h12m", w:3.4}, {day:33, hour:9.2,  lag:"01h32m", w:1.6},
+    {day:51, hour:19.9, lag:"05h04m", w:5.1}, {day:67, hour:11.5, lag:"02h11m", w:2.2},
+    {day:86, hour:16.8, lag:"03h25m", w:3.5}, {day:104,hour:2.4,  lag:"06h12m", w:6.2},
+    {day:121,hour:13.1, lag:"01h48m", w:1.8}, {day:138,hour:18.7, lag:"02h55m", w:2.9},
+    {day:156,hour:8.3,  lag:"02h02m", w:2.1}, {day:172,hour:21.4, lag:"04h30m", w:4.5},
+    {day:191,hour:9.2,  lag:"01h39m", w:1.7}, {day:208,hour:14.1, lag:"03h21m", w:3.4}
+  ];
+
+  var X = function(d){ return (d/SPAN)*1000; };
+
+  /* ── Track A: interval bars (solid = measured) ── */
+  var gA = document.getElementById("trackA");
+  if (gA){
+    EVENTS.forEach(function(e){
+      var w = Math.max(4, e.w*3.2);   /* interval width must read as width */
+      var r = document.createElementNS("http://www.w3.org/2000/svg","rect");
+      r.setAttribute("x", X(e.day).toFixed(1));
+      r.setAttribute("y", "28");
+      r.setAttribute("width", w.toFixed(1));
+      r.setAttribute("height", "72");
+      gA.appendChild(r);
+    });
+  }
+
+  /* ── Track B: hazard (hairline = computed) ── */
+  var pB = document.getElementById("trackB");
+  if (pB){
+    var d = "M 0,86", prev = 0;
+    EVENTS.forEach(function(e){
+      var x = X(e.day);
+      var gap = e.day - prev;
+      var peak = 110 - Math.min(46, 16 + gap*1.7);      // longer wait → higher hazard
+      d += " L "+x.toFixed(1)+","+peak.toFixed(1);
+      d += " L "+(x+2).toFixed(1)+",108";                // event → hazard collapses
+      prev = e.day;
+    });
+    var lastGap = SPAN - prev;
+    var nowY = 110 - Math.min(46, 16 + lastGap*1.7);
+    d += " L 1000,"+nowY.toFixed(1);
+    pB.setAttribute("d", d);
+    var c = document.getElementById("trackBnow");
+    if (c){ c.setAttribute("cx","997"); c.setAttribute("cy", nowY.toFixed(1)); }
+  }
+
+  /* ── barcode strips ── */
+  document.querySelectorAll("[data-bars]").forEach(function(el, i){
+    var n = parseInt(el.getAttribute("data-bars"),10) || 40;
+    var rnd = mulberry(9973 + i*131);
+    var frag = document.createDocumentFragment();
+    for (var k=0;k<n;k++){
+      var b = document.createElement("i");
+      b.style.width = (rnd()<.28 ? 2 : 1) + "px";
+      b.style.opacity = rnd()<.35 ? ".35" : "1";
+      frag.appendChild(b);
+    }
+    el.appendChild(frag);
+  });
+
+  /* ── event log nodes ── */
+  var host = document.getElementById("nodes");
+  if (host){
+    var frag = document.createDocumentFragment();
+    EVENTS.slice().reverse().forEach(function(e){
+      var when = new Date(DAY0 + e.day*864e5);
+      var iso  = when.toISOString().slice(0,10);
+      var row = document.createElement("article");
+      row.className = "node";
+
+      var c1 = document.createElement("div");
+      c1.className = "when num";
+      c1.textContent = iso;
+
+      var c2 = document.createElement("div");
+      var iv = document.createElement("div");
+      iv.className = "interval";
+      /* six-hour ticks so the bar reads against a real 24h axis */
+      [25,50,75].forEach(function(p){
+        var t = document.createElement("div");
+        t.className = "tick"; t.style.left = p+"%";
+        iv.appendChild(t);
+      });
+      /* an interval may cross midnight — draw it as two segments rather
+         than letting it overflow, which would misreport when it ended */
+      var end = e.hour + e.w;
+      var seg1 = document.createElement("div");
+      seg1.className = "fillbar";
+      seg1.style.left  = (e.hour/24*100).toFixed(2)+"%";
+      seg1.style.width = (Math.min(24,end) - e.hour)/24*100 + "%";
+      iv.appendChild(seg1);
+      if (end > 24){
+        var seg2 = document.createElement("div");
+        seg2.className = "fillbar";
+        seg2.style.left  = "0%";
+        seg2.style.width = ((end-24)/24*100).toFixed(2)+"%";
+        seg2.title = "continues past midnight";
+        iv.appendChild(seg2);
+      }
+      var hrs = document.createElement("div");
+      hrs.className = "hrs";
+      hrs.innerHTML = "<span>00</span><span>06</span><span>12</span><span>18</span><span>24</span>";
+      iv.appendChild(hrs);
+
+      var meta = document.createElement("div");
+      meta.className = "meta";
+      meta.style.marginTop = "20px";
+      var h0 = Math.floor(e.hour), m0 = Math.round((e.hour-h0)*60);
+      var pad = function(n){ return (n<10?"0":"")+n; };
+      meta.innerHTML = '<span>located in <b class="num">'+pad(h0)+':'+pad(m0)+
+        '</b> +<b class="num">'+e.w.toFixed(1)+' h</b> UTC</span>'+
+        '<span>detection lag <b class="num">'+e.lag+'</b></span>'+
+        '<span>source <b>self-account</b></span>';
+      c2.appendChild(iv); c2.appendChild(meta);
+
+      var c3 = document.createElement("div");
+      var key = document.createElement("div");
+      key.className = "mxk";
+      key.textContent = "HOUR 00–23";
+      var mxg = document.createElement("div");
+      mxg.className = "mx";
+      mxg.setAttribute("aria-hidden","true");
+      for (var k=0;k<24;k++){
+        var cell = document.createElement("i");
+        /* lit iff the interval covers that hour, wrapping past midnight */
+        if ((k >= Math.floor(e.hour) && k < end) || (end > 24 && k < end - 24)) cell.className = "on";
+        mxg.appendChild(cell);
+      }
+      c3.appendChild(key); c3.appendChild(mxg);
+
+      row.appendChild(c1); row.appendChild(c2); row.appendChild(c3);
+      frag.appendChild(row);
+    });
+    host.appendChild(frag);
+  }
+
+  /* ── poll stream: the raw rows the discriminant runs on ── */
+  var pollHost = document.getElementById("polls");
+  if (pollHost){
+    var ev = EVENTS[EVENTS.length-1];
+    var evT = DAY0 + ev.day*864e5 + ev.hour*36e5;
+    var raBefore = DAY0 + (ev.day+4)*864e5 + 3*36e5;   // announced while quota was draining
+    var raAfter  = DAY0 + (ev.day+7)*864e5 + 3*36e5;   // new window after the bonus reset
+    var fmt = function(ms){ return new Date(ms).toISOString().slice(5,16).replace("T"," "); };
+    var rows = [];
+    for (var i=-5;i<=4;i++){
+      var t = evT + i*3.4*36e5, left, ra, verdict, delta;
+      if (i < 0)      { left = 12 - (5+i)*2.1; ra = raBefore; verdict = "nominal";     delta = "−2.1"; }
+      else if (i===0) { left = 100;            ra = raAfter;  verdict = "BONUS RESET"; delta = "+96.4"; }
+      else            { left = 100 - i*6.4;    ra = raAfter;  verdict = "nominal";     delta = "−6.4"; }
+      rows.push({t:t,left:left,ra:ra,verdict:verdict,delta:delta,evt:(i===0)});
+    }
+    var f3 = document.createDocumentFragment();
+    rows.reverse().forEach(function(r){
+      var tr = document.createElement("tr");
+      if (r.evt) tr.className = "evt";
+      tr.innerHTML =
+        '<td class="num">'+fmt(r.t)+'</td>'+
+        '<td class="num">'+r.left.toFixed(1)+'%</td>'+
+        '<td class="num">'+fmt(r.ra)+'</td>'+
+        '<td class="num">'+r.delta+'</td>'+
+        '<td>'+r.verdict+'</td>';
+      f3.appendChild(tr);
+    });
+    pollHost.appendChild(f3);
+  }
+
+  /* ── day matrix: seven rows so each row is one weekday ── */
+  var mx = document.getElementById("mx");
+  if (mx){
+    var hits = {};
+    EVENTS.forEach(function(e){ hits[e.day] = 1; });
+    var frag2 = document.createDocumentFragment();
+    var firstDow = new Date(DAY0).getUTCDay();          // 0 = Sunday
+    var padCells = (firstDow + 6) % 7;                  // shift so Monday is row 0
+    for (var p=0;p<padCells;p++){
+      var v = document.createElement("i"); v.className = "void";
+      frag2.appendChild(v);
+    }
+    var tally = [0,0,0,0,0,0,0];
+    for (var day=0; day<=SPAN; day++){
+      var cell = document.createElement("i");
+      if (hits[day]){
+        cell.className = "hit";
+        tally[((new Date(DAY0 + day*864e5)).getUTCDay() + 6) % 7]++;
+      }
+      if (day === SPAN) cell.className += " today";
+      frag2.appendChild(cell);
+    }
+    mx.appendChild(frag2);
+
+    var skew = document.getElementById("mx-skew");
+    if (skew){
+      var names = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+      skew.textContent = "weekday tally — " + tally.map(function(v,i){
+        return names[i]+" "+v;
+      }).join(" · ");
+    }
+  }
+
+  /* ── UTC clock ── */
+  var clock = document.getElementById("clock");
+  function tick(){
+    if (!clock) return;
+    clock.textContent = new Date().toISOString().replace("T"," ").slice(0,19) + " UTC";
+  }
+  tick(); setInterval(tick, 1000);
+
+  /* ── background barcode field (canvas, seeded) ── */
+  var cv = document.getElementById("field");
+  if (cv){
+    var ctx = cv.getContext("2d"), W=0, H=0, cols=[];
+    function build(){
+      var dpr = Math.min(2, window.devicePixelRatio||1);
+      W = cv.clientWidth; H = cv.clientHeight;
+      cv.width = Math.floor(W*dpr); cv.height = Math.floor(H*dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      var rnd = mulberry(20260804);
+      cols = []; var x = 0;
+      while (x < W){
+        var w = rnd()<.22 ? 2 : 1;
+        cols.push({x:x, w:w, a:rnd()*0.5, drift:(rnd()-0.5)*0.35});
+        x += w + Math.floor(rnd()*11) + 1;
+      }
+      draw(0);
+    }
+    function draw(t){
+      ctx.clearRect(0,0,W,H);
+      ctx.fillStyle = "#fff";
+      for (var i=0;i<cols.length;i++){
+        var c = cols[i];
+        var a = reduce ? c.a*0.55 : c.a*(0.55 + 0.45*Math.sin(t*0.0004 + c.drift*7));
+        if (a <= 0.02) continue;
+        ctx.globalAlpha = Math.min(0.5, Math.abs(a));
+        ctx.fillRect(c.x, 0, c.w, H);
+      }
+      ctx.globalAlpha = 1;
+    }
+    var raf = null;
+    function loop(t){ draw(t); raf = requestAnimationFrame(loop); }
+    build();
+    if (!reduce) raf = requestAnimationFrame(loop);
+    var rt;
+    window.addEventListener("resize", function(){
+      clearTimeout(rt);
+      rt = setTimeout(function(){
+        if (raf) cancelAnimationFrame(raf);
+        build();
+        if (!reduce) raf = requestAnimationFrame(loop);
+      }, 150);
+    });
+  }
+})();
+</script>
+</body>
+</html>

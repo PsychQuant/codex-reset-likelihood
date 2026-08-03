@@ -1,0 +1,33 @@
+# Brainstorming / design scratch (superpowers visual companion)
+.superpowers/
+
+# Impeccable local scratch (sketches, live-mode config)
+.impeccable/
+
+# Local collector state — holds the previous observation the discriminant
+# needs. Machine-local by design; must never be committed.
+.collector-state/
+
+# macOS
+.DS_Store
+
+# Secrets — the local collector reads credentials from ~/.codex/auth.json,
+# never from this repo. Nothing token-shaped may ever land here.
+.env
+.env.*
+*.pem
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Node / Vercel
+node_modules/
+.vercel/
+.next/
+dist/
