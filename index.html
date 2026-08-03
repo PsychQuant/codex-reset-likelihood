@@ -46,7 +46,7 @@ h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.01em;text-t
 .bars i{display:block;background:var(--ink)}
 
 /* ─── top bar ──────────────────────────────────── */
-header{border-bottom:1px solid var(--hair);position:sticky;top:0;background:rgba(0,0,0,.92);backdrop-filter:blur(2px);z-index:5}
+header{border-bottom:1px solid var(--hair);position:sticky;top:0;background:var(--ground);z-index:5}
 .topbar{display:flex;align-items:center;gap:16px;padding:10px 16px;flex-wrap:wrap}
 .wordmark{font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.04em;white-space:nowrap}
 nav{display:flex;gap:14px;margin-left:auto;flex-wrap:wrap}
@@ -60,8 +60,15 @@ nav a:hover,nav a:focus-visible{opacity:1;border-bottom-color:var(--ink)}
   padding:7px 16px;border-bottom:1px solid var(--hair);
   background:var(--ink);color:var(--ground);
   font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  position:sticky;z-index:4;
 }
 .synthetic .bars i{background:var(--ground)}
+/* per-section mark so no fabricated figure is ever on screen unlabelled */
+.synth-tag{
+  display:inline-block;background:var(--ink);color:var(--ground);
+  font-weight:600;font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  padding:1px 5px;margin-left:8px;vertical-align:2px;
+}
 
 /* ─── layout ───────────────────────────────────── */
 main{max-width:1600px;margin:0 auto;padding:0 16px 80px}
@@ -118,8 +125,10 @@ section{padding:34px 0;border-bottom:1px solid var(--hair-soft)}
 
 /* ─── 03 matrix ────────────────────────────────── */
 .mx-wrap{display:flex;gap:8px;align-items:flex-start;overflow-x:auto;padding-bottom:6px}
-.mx-days{display:grid;grid-template-rows:repeat(7,11px);gap:2px;flex:none}
+.mx-days{display:grid;grid-template-rows:14px repeat(7,11px);gap:2px;flex:none}
 .mx-days span{font-size:9px;line-height:11px;letter-spacing:.08em;opacity:.45}
+.mx-months{display:grid;grid-auto-flow:column;grid-auto-columns:11px;gap:2px;height:14px;margin-bottom:2px}
+.mx-months span{font-size:9px;line-height:14px;letter-spacing:.06em;opacity:.5;white-space:nowrap;grid-row:1}
 .matrix{display:grid;grid-template-rows:repeat(7,11px);grid-auto-flow:column;grid-auto-columns:11px;gap:2px;flex:none}
 .matrix i{width:11px;height:11px;border:1px solid var(--hair-soft)}
 .matrix i.hit{background:var(--ink);border-color:var(--ink)}
@@ -156,7 +165,15 @@ footer a{margin-left:auto}
 @media (max-width:860px){
   .dual{grid-template-columns:1fr}
   .node{grid-template-columns:1fr;gap:8px}
-  .node .mx{justify-self:start}
+  /* header must not eat the viewport or let content ghost through it */
+  header{position:static}
+  .synthetic{top:0}
+  .topbar{gap:8px;padding:8px 16px}
+  nav{gap:9px;margin-left:0;width:100%;order:3}
+  nav a{font-size:9px;letter-spacing:.1em}
+  .clock{font-size:9px;margin-left:auto}
+  .stream{overflow-x:auto}
+  .stream table{min-width:460px}
 }
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
@@ -212,7 +229,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
         <div class="track-wrap">
           <div class="track-lbl">
             <span class="chip solid">SOLID</span>
-            <span>Track A — observed resets (fact)</span>
+            <span>Track A — observed resets (fact) · at this scale an interval is sub-pixel, so bars mark position only — widths are in the log</span>
           </div>
           <svg viewBox="0 0 1000 120" preserveAspectRatio="none" style="width:100%;height:96px;display:block" role="img" aria-label="Track A: twelve observed bonus resets between January and August 2026, each drawn as an interval bar rather than a point.">
             <line x1="0" y1="100" x2="1000" y2="100" stroke="rgba(255,255,255,.22)" stroke-width="1"/>
@@ -243,8 +260,9 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
               <tr>
                 <th>observed_at (UTC)</th>
                 <th>weekly left</th>
-                <th>announced reset_at</th>
                 <th>Δ</th>
+                <th>prev reset_at</th>
+                <th>curr reset_at</th>
                 <th>verdict</th>
               </tr>
             </thead>
@@ -255,34 +273,40 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
       <div class="readouts">
         <div class="verdict fact">
-          <div class="verdict-k">Track A · measured</div>
-          <div class="verdict-v">NO BONUS<br>RESET</div>
+          <h3 class="verdict-v">TRACK A<br>NO BONUS RESET</h3>
           <div class="verdict-sub">
-            Last observed <b>7 d 09 h</b> ago.<br>
+            Measured. Last observed <b id="since">——</b> ago.<br>
             Quota rose before its announced <code style="background:#000;color:#fff;padding:0 3px">reset_at</code> — the only signature that separates a bonus reset from an ordinary rollover.
           </div>
           <div class="bars" style="width:100%;height:16px;margin-top:12px" aria-hidden="true" data-bars="110"></div>
         </div>
 
         <div class="readout">
-          <div class="verdict-k dim">Track B · computed</div>
-          <div class="big num">18.4<span style="font-size:14px">%</span></div>
-          <div class="verdict-sub dim">Probability of a bonus reset within 24 h, given 7 days elapsed.</div>
+          <h3 style="font-size:11px;margin-bottom:8px">TRACK B — COMPUTED</h3>
+          <div class="big num"><span id="p24">—</span><span style="font-size:14px">%</span></div>
+          <div class="verdict-sub dim">Probability of a bonus reset within 24 h, given <span class="num" id="elapsed">—</span> days elapsed.</div>
           <dl>
-            <dt>Model</dt><dd>Exponential</dd>
-            <dt>Events</dt><dd class="num">12</dd>
-            <dt>Mean interval</dt><dd class="num">17.1 d</dd>
-            <dt>80% CI</dt><dd class="num">9–31%</dd>
+            <dt>Model</dt><dd>Weibull</dd>
+            <dt>Shape k</dt><dd class="num" id="wk">—</dd>
+            <dt>Scale λ</dt><dd class="num" id="wl">—</dd>
+            <dt>Events</dt><dd class="num" id="nev">—</dd>
+            <dt>Mean interval</dt><dd class="num" id="mint">—</dd>
           </dl>
+          <p class="verdict-sub dim" style="margin-top:10px;border-top:1px solid var(--hair-soft);padding-top:8px">
+            Not exponential: an exponential hazard is memoryless, so "days elapsed" could not move this number at all. k&gt;1 is what makes waiting informative.
+          </p>
         </div>
 
-        <div class="readout">
-          <div class="verdict-k dim">Pipeline</div>
+        <div class="readout" style="border-style:dashed">
+          <h3 style="font-size:11px;margin-bottom:8px">REAL STATE TODAY</h3>
+          <div class="big">INSUFFICIENT<br>DATA</div>
+          <div class="verdict-sub dim" style="margin-top:8px">
+            Observed events: <b class="num">0</b>. Below three, no risk figure may be published — so everything above is a <b>demonstration</b> of the populated state, not a reading.
+          </div>
           <dl>
-            <dt>Endpoint</dt><dd>NOMINAL</dd>
-            <dt>Schema</dt><dd>NO DRIFT</dd>
-            <dt>Collectors</dt><dd class="num">1</dd>
-            <dt>Last poll</dt><dd class="num">04 m ago</dd>
+            <dt>Collector</dt><dd>NOT RUNNING</dd>
+            <dt>Endpoint</dt><dd>UNPOLLED</dd>
+            <dt>Log entries</dt><dd class="num">0</dd>
           </dl>
         </div>
       </div>
@@ -293,7 +317,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   <section id="log">
     <div class="sec-head">
       <span class="idx">02</span>
-      <h2>Event log</h2>
+      <h2>Event log</h2><span class="synth-tag">synthetic</span>
       <span class="note">append-only · every row reproducible from the public JSONL</span>
     </div>
     <div class="nodes" id="nodes"></div>
@@ -303,14 +327,18 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   <section id="matrix">
     <div class="sec-head">
       <span class="idx">03</span>
-      <h2>Day matrix</h2>
+      <h2>Day matrix</h2><span class="synth-tag">synthetic</span>
       <span class="note">one cell per day · 2026-01-01 → today</span>
     </div>
     <div class="mx-wrap">
       <div class="mx-days" aria-hidden="true">
+        <span class="mx-spacer"></span>
         <span>MON</span><span></span><span>WED</span><span></span><span>FRI</span><span></span><span>SUN</span>
       </div>
-      <div class="matrix" id="mx" role="img" aria-label="Day matrix: one cell per day since 2026-01-01, arranged in columns of seven so each row is a weekday. Filled cells mark days on which a bonus reset was observed."></div>
+      <div>
+        <div class="mx-months" id="mx-months" aria-hidden="true"></div>
+        <div class="matrix" id="mx" role="img" aria-label="Day matrix: one cell per day since 2026-01-01, arranged in columns of seven so each row is a weekday and each column is a week. Filled cells mark days on which a bonus reset was observed."></div>
+      </div>
     </div>
     <div class="mx-legend">
       <span><i></i>no reset observed</span>
@@ -324,7 +352,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   <section id="score">
     <div class="sec-head">
       <span class="idx">04</span>
-      <h2>Scorecards</h2>
+      <h2>Scorecards</h2><span class="synth-tag">synthetic</span>
       <span class="note">two claims · two independent scores</span>
     </div>
     <div class="cards">
@@ -333,12 +361,12 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
         <div class="kind">scores track A — fact</div>
         <table>
           <tr><th>metric</th><th>value</th></tr>
-          <tr><td>Median detection lag</td><td class="num">02 h 41 m</td></tr>
-          <tr><td>Worst lag</td><td class="num">06 h 12 m</td></tr>
-          <tr><td>Recall vs. later consensus</td><td class="num">11 / 12</td></tr>
-          <tr><td>False positives</td><td class="num">0</td></tr>
+          <tr><td>Median detection lag</td><td class="num" id="medlag">—</td></tr>
+          <tr><td>Worst lag</td><td class="num" id="worstlag">—</td></tr>
+          <tr><td>Recall vs. later consensus</td><td>NOT YET SCORED</td></tr>
+          <tr><td>False positives</td><td>NOT YET SCORED</td></tr>
         </table>
-        <p class="verdict-sub dim" style="margin-top:10px">Lag is bounded below by the poll interval: an event is only ever located inside an interval, never at an instant.</p>
+        <p class="verdict-sub dim" style="margin-top:10px">The two lag figures are computed from the twelve rows in the log above — check them. Recall needs a consensus set that only exists after the fact, and none has been assembled yet; publishing a number for it now would be inventing one.</p>
       </div>
 
       <div class="card">
@@ -427,49 +455,109 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
      w    = width of that interval in hours (poll gap). Both drive the
      drawing directly; nothing about an event is decorative. */
   var EVENTS = [
-    {day:17, hour:14.2, lag:"03h12m", w:3.4}, {day:33, hour:9.2,  lag:"01h32m", w:1.6},
-    {day:51, hour:19.9, lag:"05h04m", w:5.1}, {day:67, hour:11.5, lag:"02h11m", w:2.2},
-    {day:86, hour:16.8, lag:"03h25m", w:3.5}, {day:104,hour:2.4,  lag:"06h12m", w:6.2},
-    {day:121,hour:13.1, lag:"01h48m", w:1.8}, {day:138,hour:18.7, lag:"02h55m", w:2.9},
-    {day:156,hour:8.3,  lag:"02h02m", w:2.1}, {day:172,hour:21.4, lag:"04h30m", w:4.5},
-    {day:191,hour:9.2,  lag:"01h39m", w:1.7}, {day:208,hour:14.1, lag:"03h21m", w:3.4}
+    {day:17, hour:14.2, lagm:192, w:3.4}, {day:33, hour:9.2,  lagm:92,  w:1.6},
+    {day:51, hour:19.9, lagm:304, w:5.1}, {day:62, hour:11.5, lagm:131, w:2.2},
+    {day:86, hour:16.8, lagm:205, w:3.5}, {day:104,hour:2.4,  lagm:372, w:6.2},
+    {day:121,hour:13.1, lagm:108, w:1.8}, {day:152,hour:18.7, lagm:175, w:2.9},
+    {day:161,hour:8.3,  lagm:122, w:2.1}, {day:178,hour:21.4, lagm:270, w:4.5},
+    {day:191,hour:9.2,  lagm:99,  w:1.7}, {day:208,hour:14.1, lagm:201, w:3.4}
   ];
+
+  /* ── statistics ─────────────────────────────────────────────
+     Every published figure is derived here from EVENTS. Nothing
+     numeric is typed into the markup, so a printed parameter can
+     never drift from the number computed beside it. */
+  function lgamma(x){
+    var c=[76.18009172947146,-86.50532032941677,24.01409824083091,
+           -1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+    var y=x, tmp=x+5.5; tmp-=(x+0.5)*Math.log(tmp);
+    var ser=1.000000000190015;
+    for(var j=0;j<6;j++) ser+=c[j]/++y;
+    return -tmp+Math.log(2.5066282746310005*ser/x);
+  }
+  var gaps=[]; for (var gi=1; gi<EVENTS.length; gi++) gaps.push(EVENTS[gi].day-EVENTS[gi-1].day);
+  var mean = gaps.reduce(function(a,b){return a+b;},0)/gaps.length;
+  var varr = gaps.reduce(function(a,b){return a+(b-mean)*(b-mean);},0)/(gaps.length-1);
+  var cv   = Math.sqrt(varr)/mean;
+  /* method of moments: k from the coefficient of variation, λ from the mean */
+  var K    = Math.pow(cv, -1.086);
+  var LAM  = mean / Math.exp(lgamma(1+1/K));
+  function cumH(t){ return Math.pow(Math.max(t,0)/LAM, K); }
+  /* P(event within the next 24h | already waited t days) */
+  function p24(t){ return 1 - Math.exp(-(cumH(t+1) - cumH(t))); }
+
+  function median(a){
+    var s=a.slice().sort(function(x,y){return x-y;}), h=s.length>>1;
+    return s.length%2 ? s[h] : (s[h-1]+s[h])/2;
+  }
+  function hm(mins){
+    var h=Math.floor(mins/60), m=Math.round(mins-h*60);
+    return (h<10?"0":"")+h+" h "+(m<10?"0":"")+m+" m";
+  }
+  function hhmm(mins){
+    var h=Math.floor(mins/60), m=Math.round(mins-h*60);
+    return (h<10?"0":"")+h+"h"+(m<10?"0":"")+m+"m";
+  }
 
   var X = function(d){ return (d/SPAN)*1000; };
 
-  /* ── Track A: interval bars (solid = measured) ── */
+  /* ── Track A: events at true axis scale (solid = measured) ──
+     One day is 1000/SPAN ≈ 4.7 units here, so a 3.4 h interval is
+     0.7 units — below a pixel. Drawing it wider would overstate the
+     measurement. Bars are floored at 1.2 units and the label says so;
+     the real interval width is legible in the event log instead. */
   var gA = document.getElementById("trackA");
   if (gA){
     EVENTS.forEach(function(e){
-      var w = Math.max(4, e.w*3.2);   /* interval width must read as width */
+      var trueW = (e.w/24) * (1000/SPAN);
       var r = document.createElementNS("http://www.w3.org/2000/svg","rect");
       r.setAttribute("x", X(e.day).toFixed(1));
       r.setAttribute("y", "28");
-      r.setAttribute("width", w.toFixed(1));
+      r.setAttribute("width", Math.max(1.2, trueW).toFixed(2));
       r.setAttribute("height", "72");
       gA.appendChild(r);
     });
   }
 
-  /* ── Track B: hazard (hairline = computed) ── */
+  /* ── Track B: Weibull hazard (hairline = computed) ──
+     Value at day d depends only on events at or before d. The curve
+     never reads the future. */
   var pB = document.getElementById("trackB");
+  var _lastEv = EVENTS[EVENTS.length-1];
+  var pNow = p24((Date.now() - (DAY0 + _lastEv.day*864e5 + _lastEv.hour*36e5))/864e5);
   if (pB){
-    var d = "M 0,86", prev = 0;
-    EVENTS.forEach(function(e){
-      var x = X(e.day);
-      var gap = e.day - prev;
-      var peak = 110 - Math.min(46, 16 + gap*1.7);      // longer wait → higher hazard
-      d += " L "+x.toFixed(1)+","+peak.toFixed(1);
-      d += " L "+(x+2).toFixed(1)+",108";                // event → hazard collapses
-      prev = e.day;
-    });
-    var lastGap = SPAN - prev;
-    var nowY = 110 - Math.min(46, 16 + lastGap*1.7);
-    d += " L 1000,"+nowY.toFixed(1);
+    var PMAX = 0.18, d = "", idx = 0;
+    for (var day=0; day<=SPAN; day++){
+      while (idx < EVENTS.length && EVENTS[idx].day <= day) idx++;
+      var elapsed = idx > 0 ? day - EVENTS[idx-1].day : day;
+      var y = 110 - Math.min(1, p24(elapsed)/PMAX)*88;
+      d += (day===0 ? "M " : " L ") + X(day).toFixed(1) + "," + y.toFixed(1);
+    }
     pB.setAttribute("d", d);
     var c = document.getElementById("trackBnow");
-    if (c){ c.setAttribute("cx","997"); c.setAttribute("cy", nowY.toFixed(1)); }
+    if (c){
+      c.setAttribute("cx","997");
+      c.setAttribute("cy",(110 - Math.min(1,pNow/PMAX)*88).toFixed(1));
+    }
   }
+
+  /* ── every published figure, computed ── */
+  function put(id, txt){ var n=document.getElementById(id); if(n) n.textContent=txt; }
+  var lastEv   = EVENTS[EVENTS.length-1];
+  var lastMs   = DAY0 + lastEv.day*864e5 + lastEv.hour*36e5;
+  /* "now" is the real clock, the same one the header ticks — so the
+     elapsed figure and the timestamp beside it can never disagree */
+  var sinceH   = (Date.now() - lastMs)/36e5;
+  put("since", Math.floor(sinceH/24)+" d "+String(Math.floor(sinceH%24)).padStart(2,"0")+" h");
+  put("p24",  (pNow*100).toFixed(1));
+  put("elapsed", (sinceH/24).toFixed(1));
+  put("wk",   K.toFixed(2));
+  put("wl",   LAM.toFixed(1)+" d");
+  put("nev",  EVENTS.length.toString());
+  put("mint", mean.toFixed(1)+" d");
+  var lags = EVENTS.map(function(e){ return e.lagm; });
+  put("medlag",  hm(median(lags)));
+  put("worstlag",hm(Math.max.apply(null,lags)));
 
   /* ── barcode strips ── */
   document.querySelectorAll("[data-bars]").forEach(function(el, i){
@@ -536,24 +624,20 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
       var pad = function(n){ return (n<10?"0":"")+n; };
       meta.innerHTML = '<span>located in <b class="num">'+pad(h0)+':'+pad(m0)+
         '</b> +<b class="num">'+e.w.toFixed(1)+' h</b> UTC</span>'+
-        '<span>detection lag <b class="num">'+e.lag+'</b></span>'+
-        '<span>source <b>self-account</b></span>';
+        '<span>detection lag <b class="num">'+hhmm(e.lagm)+'</b></span>'+
+        '<span>source <b>self-account</b></span>'+
+        (end > 24 ? '<span class="dim">crosses midnight</span>' : '');
       c2.appendChild(iv); c2.appendChild(meta);
 
+      /* right column carries what the bar cannot: the gap to the
+         previous event, which is the quantity the hazard model eats */
       var c3 = document.createElement("div");
-      var key = document.createElement("div");
-      key.className = "mxk";
-      key.textContent = "HOUR 00–23";
-      var mxg = document.createElement("div");
-      mxg.className = "mx";
-      mxg.setAttribute("aria-hidden","true");
-      for (var k=0;k<24;k++){
-        var cell = document.createElement("i");
-        /* lit iff the interval covers that hour, wrapping past midnight */
-        if ((k >= Math.floor(e.hour) && k < end) || (end > 24 && k < end - 24)) cell.className = "on";
-        mxg.appendChild(cell);
-      }
-      c3.appendChild(key); c3.appendChild(mxg);
+      c3.style.textAlign = "right";
+      var gapPrev = null;
+      var pos = EVENTS.indexOf(e);
+      if (pos > 0) gapPrev = e.day - EVENTS[pos-1].day;
+      c3.innerHTML = '<div class="mxk">GAP FROM PREV</div><div class="when num">'+
+        (gapPrev===null ? "—" : gapPrev+" d")+'</div>';
 
       row.appendChild(c1); row.appendChild(c2); row.appendChild(c3);
       frag.appendChild(row);
@@ -575,17 +659,21 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
       if (i < 0)      { left = 12 - (5+i)*2.1; ra = raBefore; verdict = "nominal";     delta = "−2.1"; }
       else if (i===0) { left = 100;            ra = raAfter;  verdict = "BONUS RESET"; delta = "+96.4"; }
       else            { left = 100 - i*6.4;    ra = raAfter;  verdict = "nominal";     delta = "−6.4"; }
-      rows.push({t:t,left:left,ra:ra,verdict:verdict,delta:delta,evt:(i===0)});
+      rows.push({t:t,left:left,ra:ra,verdict:verdict,delta:delta,evt:(i===0),
+                 prevRa: rows.length ? rows[rows.length-1].ra : raBefore});
     }
     var f3 = document.createDocumentFragment();
     rows.reverse().forEach(function(r){
       var tr = document.createElement("tr");
       if (r.evt) tr.className = "evt";
+      /* on the event row the rule is visible in one line:
+         observed_at < prev reset_at, and the quota went up */
       tr.innerHTML =
         '<td class="num">'+fmt(r.t)+'</td>'+
         '<td class="num">'+r.left.toFixed(1)+'%</td>'+
-        '<td class="num">'+fmt(r.ra)+'</td>'+
         '<td class="num">'+r.delta+'</td>'+
+        '<td class="num">'+fmt(r.prevRa)+'</td>'+
+        '<td class="num">'+fmt(r.ra)+'</td>'+
         '<td>'+r.verdict+'</td>';
       f3.appendChild(tr);
     });
@@ -616,6 +704,27 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     }
     mx.appendChild(frag2);
 
+    /* month axis — without it a lit cell cannot be located in time */
+    var months = document.getElementById("mx-months");
+    if (months){
+      var mf = document.createDocumentFragment(), seenMonth = -1;
+      var totalCols = Math.ceil((padCells + SPAN + 1)/7);
+      for (var col=0; col<totalCols; col++){
+        var firstDayOfCol = col*7 - padCells;
+        var dref = new Date(DAY0 + Math.max(0,firstDayOfCol)*864e5);
+        var m = dref.getUTCMonth();
+        var sp = document.createElement("span");
+        sp.style.gridColumn = (col+1);
+        if (m !== seenMonth){
+          sp.textContent = ["JAN","FEB","MAR","APR","MAY","JUN",
+                            "JUL","AUG","SEP","OCT","NOV","DEC"][m];
+          seenMonth = m;
+        }
+        mf.appendChild(sp);
+      }
+      months.appendChild(mf);
+    }
+
     var skew = document.getElementById("mx-skew");
     if (skew){
       var names = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
@@ -624,6 +733,14 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
       }).join(" · ");
     }
   }
+
+  /* ── keep the synthetic banner pinned under the header ── */
+  (function(){
+    var hd = document.querySelector("header"), sy = document.querySelector(".synthetic");
+    if (!hd || !sy) return;
+    function place(){ sy.style.top = (window.innerWidth > 860 ? hd.offsetHeight : 0) + "px"; }
+    place(); window.addEventListener("resize", place);
+  })();
 
   /* ── UTC clock ── */
   var clock = document.getElementById("clock");
@@ -651,30 +768,25 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
       }
       draw(0);
     }
-    function draw(t){
+    /* The field is a static material, not ambient animation. Motion here
+       is reserved for one authored moment: a newly detected reset inverts
+       the field once. Nothing is currently live, so it stays still. */
+    function draw(){
       ctx.clearRect(0,0,W,H);
       ctx.fillStyle = "#fff";
       for (var i=0;i<cols.length;i++){
         var c = cols[i];
-        var a = reduce ? c.a*0.55 : c.a*(0.55 + 0.45*Math.sin(t*0.0004 + c.drift*7));
-        if (a <= 0.02) continue;
-        ctx.globalAlpha = Math.min(0.5, Math.abs(a));
+        if (c.a <= 0.02) continue;
+        ctx.globalAlpha = Math.min(0.5, c.a);
         ctx.fillRect(c.x, 0, c.w, H);
       }
       ctx.globalAlpha = 1;
     }
-    var raf = null;
-    function loop(t){ draw(t); raf = requestAnimationFrame(loop); }
     build();
-    if (!reduce) raf = requestAnimationFrame(loop);
     var rt;
     window.addEventListener("resize", function(){
       clearTimeout(rt);
-      rt = setTimeout(function(){
-        if (raf) cancelAnimationFrame(raf);
-        build();
-        if (!reduce) raf = requestAnimationFrame(loop);
-      }, 150);
+      rt = setTimeout(build, 150);
     });
   }
 })();
