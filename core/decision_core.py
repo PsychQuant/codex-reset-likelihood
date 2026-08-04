@@ -12,7 +12,10 @@ by the recomputed kind; a disagreement with the collector's recorded
 verdict is reported, never silently resolved.
 """
 
+import argparse
+import json
 import math
+import time
 from datetime import datetime, timezone
 
 TS_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -123,3 +126,41 @@ def decide(events, now_epoch):
         "p24": p24(k, lam, elapsed_days),
     }
     return verdict
+
+
+def _load_log(path):
+    events = []
+    with open(path, encoding="utf-8") as fh:
+        for lineno, line in enumerate(fh, start=1):
+            if not line.strip():
+                continue
+            try:
+                events.append(json.loads(line))
+            except ValueError as exc:
+                raise SystemExit(
+                    "%s line %d is not valid JSON: %r" % (path, lineno, exc)
+                )
+    return events
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Re-run the decision core over an observation log. "
+        "This is the reproducibility entry point: the same function the "
+        "site's scorecards come from, on the same public log."
+    )
+    parser.add_argument("log", help="path to observations.jsonl")
+    parser.add_argument(
+        "--now",
+        help="ISO-8601 UTC (e.g. 2026-08-04T00:00:00Z); default: real now",
+    )
+    args = parser.parse_args(argv)
+
+    now_epoch = parse_ts(args.now) if args.now else int(time.time())
+    verdict = decide(_load_log(args.log), now_epoch)
+    print(json.dumps(verdict, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

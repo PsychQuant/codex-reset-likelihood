@@ -67,6 +67,28 @@ Hosted on Vercel under the PsychQuant team. `make check` refuses to ship if the 
 
 `make verify` exists because of a real failure: a Vercel team project ships with Deployment Protection on, so the CLI reports `READY` while every anonymous visitor is bounced to an SSO login. **A deployment can be green and invisible at the same time.** `deploy` now runs `verify` automatically and fails loudly on a 302/307.
 
+## Running the instrument
+
+The collector is one stdlib-only file. One invocation = one poll; drive it with cron or launchd:
+
+```shell
+python3 codex_reset_collector.py            # reads ~/.codex/auth.json locally
+python3 -m pytest tests/ -v                 # the full boundary-case suite
+
+# every 30 minutes via cron (interval width = detection-lag floor):
+*/30 * * * * cd /path/to/codex-reset-likelihood && python3 codex_reset_collector.py >> .collector-state/collector.log 2>&1
+```
+
+Exit codes: `0` ok · `2` schema drift recorded (inference halts) · `3` auth · `4` network · `5` corrupt state.
+
+Re-run the decision core over the public log — this is the reproducibility claim made executable:
+
+```shell
+python3 -m core.decision_core data/observations.jsonl
+```
+
+`data/observations.jsonl` is committed **empty**: no real observation has been collected yet, and the deployed page stays synthetic until the log holds ≥ 3 real events.
+
 ## Documents
 
 - [`PRODUCT.md`](./PRODUCT.md) — product truth, principles, honesty boundaries
