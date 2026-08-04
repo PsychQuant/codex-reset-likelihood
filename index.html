@@ -80,6 +80,9 @@ section{padding:34px 0;border-bottom:1px solid var(--hair-soft)}
 
 /* ─── 01 dual track ────────────────────────────── */
 .dual{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:24px;align-items:start}
+/* grid items default to min-width:auto and are pushed open by their
+   content; without this the poll table widens the whole section */
+.dual > *{min-width:0}
 .verdict{border:1px solid var(--hair);padding:16px}
 .verdict.fact{background:var(--ink);color:var(--ground)}
 .verdict.fact .bars i{background:var(--ground)}
@@ -87,13 +90,14 @@ section{padding:34px 0;border-bottom:1px solid var(--hair-soft)}
 .verdict-v{font-family:var(--display);font-weight:800;font-size:clamp(20px,3.4vw,34px);line-height:1.05}
 .verdict-sub{margin-top:10px;font-size:11px;line-height:1.6}
 .track-wrap{border:1px solid var(--hair);padding:14px 14px 8px}
-.track-lbl{display:flex;gap:10px;align-items:center;font-size:10px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:6px}
+.track-lbl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;min-width:0;font-size:10px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:6px}
+.track-lbl > span{min-width:0}
 .track-lbl .chip{border:1px solid var(--hair);padding:1px 6px}
 .track-lbl .chip.solid{background:var(--ink);color:var(--ground);border-color:var(--ink)}
 .stream{border:1px solid var(--hair);border-top:0;padding:12px 14px}
 .stream table{width:100%;border-collapse:collapse;font-size:10.5px}
-.stream th,.stream td{padding:2px 0;text-align:right;border-bottom:1px solid rgba(255,255,255,.06);white-space:nowrap}
-.stream th:first-child,.stream td:first-child{text-align:left}
+.stream th,.stream td{padding:2px 0 2px 14px;text-align:right;border-bottom:1px solid rgba(255,255,255,.06);white-space:nowrap}
+.stream th:first-child,.stream td:first-child{text-align:left;padding-left:0}
 .stream th{font-size:9px;letter-spacing:.14em;text-transform:uppercase;opacity:.45;font-weight:600}
 .stream td{opacity:.72}
 .stream tr.evt td{opacity:1;font-weight:600}
@@ -173,7 +177,7 @@ footer a{margin-left:auto}
   nav a{font-size:9px;letter-spacing:.1em}
   .clock{font-size:9px;margin-left:auto}
   .stream{overflow-x:auto}
-  .stream table{min-width:460px}
+  .stream table{min-width:540px}
 }
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
@@ -203,7 +207,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
       <a href="#matrix">MATRIX</a>
       <a href="#score">CALIBRATION</a>
       <a href="#method">METHOD</a>
-      <a href="https://github.com/kiki830621/codex-reset-likelihood">SOURCE</a>
+      <a href="https://github.com/PsychQuant/codex-reset-likelihood">SOURCE</a>
     </nav>
     <span class="clock num" id="clock">——</span>
   </div>
@@ -238,7 +242,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
           <div class="track-lbl" style="margin-top:14px">
             <span class="chip">HAIRLINE</span>
-            <span>Track B — 24h hazard rate (inference)</span>
+            <span>Track B — 24h hazard rate (inference) · <span id="bAxis">—</span>, scaled to the data</span>
           </div>
           <svg viewBox="0 0 1000 120" preserveAspectRatio="none" style="width:100%;height:96px;display:block" role="img" aria-label="Track B: computed 24-hour hazard rate over the same period, resetting to near zero after each observed event and climbing with elapsed days.">
             <line x1="0" y1="110" x2="1000" y2="110" stroke="rgba(255,255,255,.22)" stroke-width="1"/>
@@ -374,12 +378,13 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
         <div class="kind">scores track B — inference</div>
         <table>
           <tr><th>claimed band</th><th>days</th><th>actual</th></tr>
-          <tr><td>00–10%</td><td class="num">96</td><td class="num">6.3%</td></tr>
-          <tr><td>10–20%</td><td class="num">71</td><td class="num">15.5%</td></tr>
-          <tr><td>20–30%</td><td class="num">38</td><td class="num">26.3%</td></tr>
-          <tr><td>30%+</td><td class="num">10</td><td class="num">30.0%</td></tr>
+          <tr><td>00–10%</td><td class="num">0</td><td>—</td></tr>
+          <tr><td>10–20%</td><td class="num">0</td><td>—</td></tr>
+          <tr><td>20–30%</td><td class="num">0</td><td>—</td></tr>
+          <tr><td>30%+</td><td class="num">0</td><td>—</td></tr>
+          <tr><td>Brier score</td><td colspan="2">NOT YET SCORED</td></tr>
         </table>
-        <p class="verdict-sub dim" style="margin-top:10px">Brier score <b class="num">0.081</b>. A site that cannot publish this table is asking to be believed rather than checked.</p>
+        <p class="verdict-sub dim" style="margin-top:10px">Filling this needs one recorded forecast per day and then that day's outcome. Zero days so far, so it is empty on purpose: it shows <b>how</b> this site can be checked, not that it already has been. A site that cannot publish this table at all is asking to be believed rather than checked.</p>
       </div>
 
       <div class="card">
@@ -434,7 +439,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   <span>CODEX-RESET-LIKELIHOOD</span>
   <span class="dim">Not affiliated with OpenAI</span>
   <span class="dim">Event log is public and reproducible</span>
-  <a href="https://github.com/kiki830621/codex-reset-likelihood">GITHUB ↗</a>
+  <a href="https://github.com/PsychQuant/codex-reset-likelihood">GITHUB ↗</a>
 </footer>
 
 </div>
@@ -526,14 +531,24 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   var _lastEv = EVENTS[EVENTS.length-1];
   var pNow = p24((Date.now() - (DAY0 + _lastEv.day*864e5 + _lastEv.hour*36e5))/864e5);
   if (pB){
-    var PMAX = 0.18, d = "", idx = 0;
+    /* first pass finds the curve's own maximum, so the axis is scaled to
+       the data and nothing is silently clipped against a fixed ceiling */
+    var series = [], idx = 0, maxP = 0;
     for (var day=0; day<=SPAN; day++){
       while (idx < EVENTS.length && EVENTS[idx].day <= day) idx++;
       var elapsed = idx > 0 ? day - EVENTS[idx-1].day : day;
-      var y = 110 - Math.min(1, p24(elapsed)/PMAX)*88;
-      d += (day===0 ? "M " : " L ") + X(day).toFixed(1) + "," + y.toFixed(1);
+      var p = p24(elapsed);
+      if (p > maxP) maxP = p;
+      series.push([day, p]);
     }
+    var PMAX = maxP * 1.06;
+    var d = series.map(function(pt, i){
+      return (i===0 ? "M " : " L ") + X(pt[0]).toFixed(1) + "," +
+             (110 - (pt[1]/PMAX)*88).toFixed(1);
+    }).join("");
     pB.setAttribute("d", d);
+    var axLbl = document.getElementById("bAxis");
+    if (axLbl) axLbl.textContent = "y axis 0–" + (PMAX*100).toFixed(0) + "%";
     var c = document.getElementById("trackBnow");
     if (c){
       c.setAttribute("cx","997");
