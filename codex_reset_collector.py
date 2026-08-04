@@ -101,3 +101,18 @@ def parse_usage(body, observed_at):
         "window_source": name,
         "reset_credits": reset_credits,
     }
+
+
+def classify(prev, curr):
+    """Apply the discriminant to two consecutive snapshots.
+
+    Quota "rises" when used_percent drops. Reads only fields that
+    build_observation publishes in the payload, so anyone holding the
+    log can recompute this classification (spec section 5).
+    """
+    quota_rose = curr["used_percent"] < prev["used_percent"]
+    if not quota_rose:
+        return None
+    if curr["observed_at"] < prev["reset_at"]:
+        return "bonus_reset"
+    return "rollover"
