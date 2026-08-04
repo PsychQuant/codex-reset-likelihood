@@ -202,3 +202,29 @@ def append_observation(log_path, obs):
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(obs, separators=(",", ":")) + "\n")
+
+
+def run_once(fetch, now, state_path, log_path):
+    """One poll cycle: fetch -> parse -> discriminant -> append -> save.
+
+    `fetch` is injected so every path below is testable without a
+    network. Returns the process exit code (0 ok, 2 schema drift).
+    """
+    prev = load_state(state_path)
+    body = fetch()
+    try:
+        curr = parse_usage(body, now)
+    except SchemaDrift as exc:
+        keys = sorted(body.keys()) if isinstance(body, dict) else []
+        append_observation(
+            log_path, build_drift_observation(now, str(exc), keys)
+        )
+        # Deliberately NOT saving state: the last good baseline is kept
+        # so the discriminant can resume from it after recovery.
+        return 2
+    if prev is not None:
+        kind = classify(prev, curr)
+        if kind is not None:
+            append_observation(log_path, build_observation(prev, curr, kind))
+    save_state(state_path, curr)
+    return 0
