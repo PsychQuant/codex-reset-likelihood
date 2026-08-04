@@ -1,0 +1,260 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-04T00:00:00Z",
+  "title": "Design System: CODEX-RESET-LIKELIHOOD",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "primary",
+        "displayName": "Signal White",
+        "canonical": "#ffffff",
+        "note": "Every mark the instrument makes; becomes the surface inside inverted blocks. Intermediate tones are this value at reduced opacity, never a separate token.",
+        "tonalRamp": [
+          "rgba(255,255,255,.06)",
+          "rgba(255,255,255,.10)",
+          "rgba(255,255,255,.16)",
+          "rgba(255,255,255,.22)",
+          "rgba(255,255,255,.35)",
+          "rgba(255,255,255,.55)",
+          "rgba(255,255,255,.72)",
+          "#ffffff"
+        ]
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Absolute Ground",
+        "canonical": "#000000",
+        "note": "Page field; becomes the ink inside inverted blocks. Sticky header and banner repaint it opaquely.",
+        "tonalRamp": [
+          "#000000",
+          "#000000",
+          "#000000",
+          "#000000",
+          "#000000",
+          "#000000",
+          "#000000",
+          "#000000"
+        ]
+      },
+      "hair": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "rgba(255,255,255,.22)",
+        "note": "The only enclosure border weight: panel edges, chip outlines, axis baselines, section rules.",
+        "tonalRamp": [
+          "rgba(255,255,255,.03)",
+          "rgba(255,255,255,.06)",
+          "rgba(255,255,255,.10)",
+          "rgba(255,255,255,.16)",
+          "rgba(255,255,255,.22)",
+          "rgba(255,255,255,.30)",
+          "rgba(255,255,255,.40)",
+          "rgba(255,255,255,.55)"
+        ]
+      },
+      "hair-soft": {
+        "role": "neutral",
+        "displayName": "Soft Hairline",
+        "canonical": "rgba(255,255,255,.10)",
+        "note": "Division rather than enclosure: between-section rules, card row rules, empty matrix cell outlines, interval mid-axis.",
+        "tonalRamp": [
+          "rgba(255,255,255,.02)",
+          "rgba(255,255,255,.04)",
+          "rgba(255,255,255,.06)",
+          "rgba(255,255,255,.08)",
+          "rgba(255,255,255,.10)",
+          "rgba(255,255,255,.14)",
+          "rgba(255,255,255,.18)",
+          "rgba(255,255,255,.22)"
+        ]
+      },
+      "hair-row": {
+        "role": "neutral",
+        "displayName": "Row Rule",
+        "canonical": "rgba(255,255,255,.06)",
+        "note": "Faintest division, used only between dense poll-stream rows where a .10 rule would read as a grid.",
+        "tonalRamp": [
+          "rgba(255,255,255,.02)",
+          "rgba(255,255,255,.03)",
+          "rgba(255,255,255,.04)",
+          "rgba(255,255,255,.05)",
+          "rgba(255,255,255,.06)",
+          "rgba(255,255,255,.08)",
+          "rgba(255,255,255,.10)",
+          "rgba(255,255,255,.14)"
+        ]
+      },
+      "wash-hover": {
+        "role": "neutral",
+        "displayName": "Hover Wash",
+        "canonical": "rgba(255,255,255,.05)",
+        "note": "The system's only hover fill, on event-log rows.",
+        "tonalRamp": [
+          "rgba(255,255,255,.02)",
+          "rgba(255,255,255,.03)",
+          "rgba(255,255,255,.04)",
+          "rgba(255,255,255,.05)",
+          "rgba(255,255,255,.07)",
+          "rgba(255,255,255,.09)",
+          "rgba(255,255,255,.12)",
+          "rgba(255,255,255,.16)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The single measured verdict statement. Uppercase Martian Mono 800, negative tracking so the words hold as a block." },
+      "headline": { "displayName": "Headline Number", "purpose": "The one published figure in a readout, and the INSUFFICIENT DATA stand-in that occupies the same slot at the same size." },
+      "title": { "displayName": "Section Title", "purpose": "Section headings and the wordmark (wordmark tracks +.04em so it reads as a name)." },
+      "subtitle": { "displayName": "Panel Heading", "purpose": "Card, readout and method sub-headings at 11px." },
+      "body": { "displayName": "Body", "purpose": "Explanatory prose, always at a subordinate opacity (.72-.75) beneath the figures it explains." },
+      "data": { "displayName": "Data", "purpose": "Tables, readout values, event metadata. Tabular figures mandatory; event rows step to weight 600." },
+      "label": { "displayName": "Label", "purpose": "Panel and track labels, definition terms, legend items. Wide tracking is legibility, not ornament." },
+      "micro": { "displayName": "Micro", "purpose": "Table headers, axis ticks, synthetic tags, nav links, weekday tallies." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "static-field", "value": "draw once; rebuild debounced 150ms on resize", "purpose": "The background barcode canvas is a material, not an animation. No loop, no ambient drift." },
+      { "name": "authored-inversion", "value": "reserved; not yet wired", "purpose": "The system's entire motion budget: one newly detected reset inverting the field. Specified in the build, not implemented." },
+      { "name": "reduced-motion-kill", "value": "@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}", "purpose": "Global refusal of all animation and transition under the user's reduced-motion preference." }
+    ],
+    "breakpoints": [
+      { "name": "collapse", "value": "860px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Verdict Block",
+      "kind": "card",
+      "refersTo": "panel-inverted",
+      "description": "The single measured answer. The only inverted display-scale surface on the page; its barcode foot inverts with it.",
+      "html": "<div class=\"ds-verdict\"><h3 class=\"ds-verdict-v\">TRACK A<br>NO BONUS RESET</h3><div class=\"ds-verdict-sub\">Measured. Last observed <b>12 d 04 h</b> ago.</div><div class=\"ds-bars\"><i></i><i class=\"w2\"></i><i class=\"dim\"></i><i></i><i class=\"w2 dim\"></i><i></i><i></i><i class=\"w2\"></i><i class=\"dim\"></i><i></i><i></i><i class=\"w2 dim\"></i><i></i><i class=\"dim\"></i><i class=\"w2\"></i><i></i></div></div>",
+      "css": ".ds-verdict{border:1px solid rgba(255,255,255,.22);padding:16px;background:#ffffff;color:#000000;border-radius:0;font-family:'Azeret Mono',ui-monospace,monospace;font-weight:300;font-size:12px;letter-spacing:.02em}.ds-verdict-v{font-family:'Martian Mono',ui-monospace,monospace;font-weight:800;font-size:clamp(20px,3.4vw,34px);line-height:1.05;letter-spacing:-.01em;text-transform:uppercase;margin:0}.ds-verdict-sub{margin-top:10px;font-size:11px;line-height:1.6}.ds-verdict-sub b{font-weight:600}.ds-verdict .ds-bars{display:flex;align-items:stretch;gap:1px;height:16px;margin-top:12px}.ds-verdict .ds-bars i{display:block;width:1px;background:#000000}.ds-verdict .ds-bars i.w2{width:2px}.ds-verdict .ds-bars i.dim{opacity:.35}"
+    },
+    {
+      "name": "Readout Panel",
+      "kind": "card",
+      "refersTo": "panel-hairline",
+      "description": "The computed rail: one headline number, a caveat sentence, and a term/value definition grid. Quieter than fact by construction.",
+      "html": "<div class=\"ds-readout\"><h3>TRACK B — COMPUTED</h3><div class=\"ds-big ds-num\">18.4<span class=\"ds-unit\">%</span></div><p class=\"ds-sub\">Probability of a bonus reset within 24 h, given <span class=\"ds-num\">12.2</span> days elapsed.</p><dl><dt>Model</dt><dd>Weibull</dd><dt>Shape k</dt><dd class=\"ds-num\">1.94</dd><dt>Scale &lambda;</dt><dd class=\"ds-num\">19.4 d</dd></dl></div>",
+      "css": ".ds-readout{border:1px solid rgba(255,255,255,.22);padding:12px;background:#000000;color:#ffffff;border-radius:0;font-family:'Azeret Mono',ui-monospace,monospace;font-weight:300;font-size:12px;letter-spacing:.02em}.ds-readout h3{font-family:'Martian Mono',ui-monospace,monospace;font-weight:800;font-size:11px;letter-spacing:-.01em;text-transform:uppercase;margin:0 0 8px}.ds-readout .ds-big{font-family:'Martian Mono',ui-monospace,monospace;font-weight:800;font-size:26px;line-height:1}.ds-readout .ds-unit{font-size:14px}.ds-readout .ds-sub{margin:6px 0 0;font-size:11px;line-height:1.6;opacity:.55}.ds-readout dl{display:grid;grid-template-columns:1fr auto;gap:4px 10px;margin-top:8px}.ds-readout dt{opacity:.55;font-size:10px;letter-spacing:.1em;text-transform:uppercase}.ds-readout dd{text-align:right;margin:0}.ds-num{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}"
+    },
+    {
+      "name": "Track Chips (SOLID / HAIRLINE)",
+      "kind": "chip",
+      "refersTo": "chip-solid",
+      "description": "Names the material a track is drawn in. Never the sole carrier of the fact/inference distinction — it always accompanies the literal words FACT or INFERENCE.",
+      "html": "<div class=\"ds-track-lbl\"><span class=\"ds-chip ds-chip-solid\">SOLID</span><span>Track A — observed resets (fact)</span></div><div class=\"ds-track-lbl\"><span class=\"ds-chip\">HAIRLINE</span><span>Track B — 24h hazard rate (inference)</span></div>",
+      "css": ".ds-track-lbl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;min-width:0;font-family:'Azeret Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#ffffff;margin-bottom:6px}.ds-track-lbl>span{min-width:0}.ds-chip{border:1px solid rgba(255,255,255,.22);padding:1px 6px;border-radius:0;font-weight:600}.ds-chip-solid{background:#ffffff;color:#000000;border-color:#ffffff}"
+    },
+    {
+      "name": "Synthetic Banner",
+      "kind": "custom",
+      "refersTo": "banner-synthetic",
+      "description": "Sticky, inverted, full-bleed. Guarantees no fabricated figure is ever on screen unlabelled. Its barcode strip inverts to black with the block.",
+      "html": "<div class=\"ds-synthetic\"><span class=\"ds-bars-k\"><i></i><i class=\"w2\"></i><i class=\"dim\"></i><i></i><i class=\"w2 dim\"></i><i></i><i></i><i class=\"w2\"></i><i class=\"dim\"></i><i></i></span><span>Synthetic data — no observations collected yet. Every figure below is illustrative.</span></div>",
+      "css": ".ds-synthetic{display:flex;gap:10px;align-items:center;padding:7px 16px;border-bottom:1px solid rgba(255,255,255,.22);background:#ffffff;color:#000000;border-radius:0;font-family:'Azeret Mono',ui-monospace,monospace;font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase}.ds-synthetic .ds-bars-k{display:flex;align-items:stretch;gap:1px;height:11px}.ds-synthetic .ds-bars-k i{display:block;width:1px;background:#000000}.ds-synthetic .ds-bars-k i.w2{width:2px}.ds-synthetic .ds-bars-k i.dim{opacity:.35}"
+    },
+    {
+      "name": "Synthetic Tag",
+      "kind": "chip",
+      "refersTo": "tag-synthetic",
+      "description": "Per-section inverted mark placed beside a heading whose figures are illustrative.",
+      "html": "<h2 class=\"ds-h2\">Event log<span class=\"ds-synth-tag\">synthetic</span></h2>",
+      "css": ".ds-h2{font-family:'Martian Mono',ui-monospace,monospace;font-weight:800;font-size:13px;letter-spacing:-.01em;text-transform:uppercase;color:#ffffff;margin:0}.ds-synth-tag{display:inline-block;background:#ffffff;color:#000000;font-family:'Azeret Mono',ui-monospace,monospace;font-weight:600;font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:1px 5px;margin-left:8px;vertical-align:2px;border-radius:0}"
+    },
+    {
+      "name": "Navigation Link",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Micro uppercase links at .6 opacity; hover and focus-visible are treated identically and both raise opacity and reveal the underline border.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#now\">FIELD</a><a href=\"#log\">LOG</a><a href=\"#matrix\">MATRIX</a><a href=\"#score\">CALIBRATION</a><a href=\"#method\">METHOD</a></nav>",
+      "css": ".ds-nav{display:flex;gap:14px;flex-wrap:wrap;background:#000000;padding:10px 0}.ds-nav a{color:#ffffff;text-decoration:none;font-family:'Azeret Mono',ui-monospace,monospace;font-weight:600;font-size:10px;letter-spacing:.16em;text-transform:uppercase;opacity:.6;padding:2px 0;border-bottom:1px solid transparent;border-radius:0}.ds-nav a:hover,.ds-nav a:focus-visible{opacity:1;border-bottom-color:#ffffff}"
+    },
+    {
+      "name": "Event Log Row",
+      "kind": "custom",
+      "refersTo": "panel-hairline",
+      "description": "One measured event: fixed date column, an interval bar drawn on a real 24h axis with six-hour ticks, and the right-flushed gap to the previous event.",
+      "html": "<article class=\"ds-node\"><div class=\"ds-when ds-num\">2026-07-27</div><div><div class=\"ds-interval\"><div class=\"ds-tick\" style=\"left:25%\"></div><div class=\"ds-tick\" style=\"left:50%\"></div><div class=\"ds-tick\" style=\"left:75%\"></div><div class=\"ds-fillbar\" style=\"left:58.75%;width:14.2%\"></div><div class=\"ds-hrs\"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div></div><div class=\"ds-meta\"><span>located in <b class=\"ds-num\">14:06</b> +<b class=\"ds-num\">3.4 h</b> UTC</span><span>detection lag <b class=\"ds-num\">03h21m</b></span><span>source <b>self-account</b></span></div></div><div class=\"ds-gap\"><div class=\"ds-mxk\">GAP FROM PREV</div><div class=\"ds-when ds-num\">17 d</div></div></article>",
+      "css": ".ds-node{display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:14px;align-items:center;border:1px solid rgba(255,255,255,.22);padding:10px 12px;background:#000000;color:#ffffff;border-radius:0;font-family:'Azeret Mono',ui-monospace,monospace;font-weight:300;font-size:12px;letter-spacing:.02em}.ds-node>*{min-width:0}.ds-node:hover{background:rgba(255,255,255,.05)}.ds-when{font-family:'Martian Mono',ui-monospace,monospace;font-weight:700;font-size:12px;white-space:nowrap}.ds-interval{position:relative;height:18px;border-left:1px solid rgba(255,255,255,.22);border-right:1px solid rgba(255,255,255,.22)}.ds-interval::before{content:'';position:absolute;left:0;right:0;top:8.5px;height:1px;background:rgba(255,255,255,.10)}.ds-tick{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.10)}.ds-fillbar{position:absolute;top:5px;height:8px;background:#ffffff;min-width:2px}.ds-hrs{position:absolute;left:0;right:0;bottom:-13px;display:flex;justify-content:space-between;font-size:9px;opacity:.35}.ds-meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:11px;margin-top:20px}.ds-meta span{opacity:.65}.ds-meta b{font-weight:600;opacity:1}.ds-gap{text-align:right}.ds-mxk{font-size:9px;letter-spacing:.1em;opacity:.4;margin-bottom:3px}.ds-num{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}"
+    },
+    {
+      "name": "Day Matrix",
+      "kind": "custom",
+      "refersTo": "matrix-cell",
+      "description": "One 11px cell per day, seven rows so each row is a weekday. Lit = solid white; unobserved = soft hairline outline; today = offset outline.",
+      "html": "<div class=\"ds-matrix\"><i></i><i></i><i class=\"hit\"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class=\"hit\"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class=\"hit\"></i><i></i><i></i><i></i><i></i><i></i><i class=\"today\"></i></div><div class=\"ds-mx-legend\"><span><i></i>no reset observed</span><span><i class=\"hit\"></i>bonus reset observed</span></div>",
+      "css": ".ds-matrix{display:grid;grid-template-rows:repeat(7,11px);grid-auto-flow:column;grid-auto-columns:11px;gap:2px;background:#000000;padding:4px 0}.ds-matrix i{width:11px;height:11px;border:1px solid rgba(255,255,255,.10);border-radius:0;display:block}.ds-matrix i.hit{background:#ffffff;border-color:#ffffff}.ds-matrix i.today{outline:1px solid #ffffff;outline-offset:1px}.ds-mx-legend{display:flex;gap:18px;margin-top:12px;font-family:'Azeret Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#ffffff;opacity:.6;flex-wrap:wrap}.ds-mx-legend span{display:flex;align-items:center;gap:6px}.ds-mx-legend i{width:9px;height:9px;display:block;border:1px solid rgba(255,255,255,.22)}.ds-mx-legend i.hit{background:#ffffff;border-color:#ffffff}"
+    },
+    {
+      "name": "Scorecard",
+      "kind": "card",
+      "refersTo": "panel-hairline",
+      "description": "One card per claim, each with its own independent score table. Values that do not exist read NOT YET SCORED, never a placeholder digit.",
+      "html": "<div class=\"ds-card\"><h3>Detection</h3><div class=\"ds-kind\">scores track A — fact</div><table><tr><th>metric</th><th>value</th></tr><tr><td>Median detection lag</td><td class=\"ds-num\">03 h 01 m</td></tr><tr><td>Recall vs. later consensus</td><td>NOT YET SCORED</td></tr></table></div>",
+      "css": ".ds-card{border:1px solid rgba(255,255,255,.22);padding:14px;background:#000000;color:#ffffff;border-radius:0;font-family:'Azeret Mono',ui-monospace,monospace;font-weight:300;font-size:12px;letter-spacing:.02em}.ds-card h3{font-family:'Martian Mono',ui-monospace,monospace;font-weight:800;font-size:11px;letter-spacing:-.01em;text-transform:uppercase;margin:0 0 2px}.ds-card .ds-kind{font-size:10px;letter-spacing:.16em;text-transform:uppercase;opacity:.5;margin-bottom:12px}.ds-card table{width:100%;border-collapse:collapse;font-size:11px}.ds-card th,.ds-card td{text-align:right;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.10)}.ds-card th:first-child,.ds-card td:first-child{text-align:left;opacity:.6}.ds-card th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;opacity:.5;font-weight:600}.ds-num{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}"
+    },
+    {
+      "name": "Barcode Strip",
+      "kind": "custom",
+      "refersTo": "panel-inverted",
+      "description": "The fact material. 1px and 2px white bars at full or .35 opacity, seeded so the same strip renders identically on every load. Inverts to black inside inverted blocks.",
+      "html": "<span class=\"ds-bars\"><i></i><i class=\"w2\"></i><i class=\"dim\"></i><i></i><i class=\"w2 dim\"></i><i></i><i></i><i class=\"w2\"></i><i class=\"dim\"></i><i></i><i></i><i class=\"w2 dim\"></i><i></i><i class=\"dim\"></i><i class=\"w2\"></i><i></i><i class=\"dim\"></i><i></i><i class=\"w2\"></i><i></i></span>",
+      "css": ".ds-bars{display:flex;align-items:stretch;gap:1px;height:14px;min-height:14px;background:#000000;padding:0}.ds-bars i{display:block;width:1px;background:#ffffff}.ds-bars i.w2{width:2px}.ds-bars i.dim{opacity:.35}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Instrument Face",
+    "overview": "This is the front panel of a measuring device, not a status page. Everything on screen is either something the instrument measured or something it computed from what it measured, and the surface is built so those two can never be confused — not by a reader who is colour-blind, not by a reader who is skimming, not by a reader who never reads the legend. The refusal that shapes the whole world is the status page's single green tick standing in for a claim nobody can audit. This page has no ticks and no green.\n\nThe world is pure black ground with pure white marks, at data-sheet density: 10-13px monospace, hairline 1px rules, no radius anywhere, no shadow anywhere, no fill that is not either fully white or fully absent. What reads as grey is white held at low opacity or white hairlines spaced apart — the greys are a density effect, never a pigment. Three materials carry all meaning: solid barcode bars for measured fact, hairline curves for computed inference, and 0/1 cell matrices for per-day state. A fourth material was named in the direction contract — a sine/wave lattice — and it is not rendered anywhere in the ship; it is recorded as an unbuilt part of the world, not as a token.\n\nDensity is deliberate and uniform: no hero whitespace, no breathing room bought at the cost of a row of data. The page reads top to bottom as five numbered instrument sections (01 Field, 02 Event log, 03 Day matrix, 04 Scorecards, 05 Method), each opening with an index numeral, an uppercase title and a right-flushed lowercase note. Emphasis is bought exclusively by inversion — a block flips to white ground with black marks — which is why there is nothing left to spend on colour.",
+    "keyCharacteristics": [
+      "Two pigments only: pure white (#ffffff) and pure black (#000000). No grey token, no hue.",
+      "Three rendering materials: solid bars (fact), hairline strokes (inference), 0/1 cells (state).",
+      "Zero radius, zero shadow; every container is a 1px hairline rectangle.",
+      "Two monospaced faces only — Martian Mono at display weight, Azeret Mono at data density — with tabular figures throughout.",
+      "Fact/inference distinction survives greyscale, colour-blindness, and screenshots.",
+      "Absent data is written out as NOT YET SCORED / INSUFFICIENT DATA; fabricated figures wear a SYNTHETIC tag."
+    ],
+    "rules": [
+      { "name": "The Two-Pigment Rule", "body": "There are exactly two colour values in this system: #ffffff and #000000. Any tone between them is white at reduced opacity or white hairlines at reduced density. Never introduce a grey token, and never introduce a hue — not for success, not for warning, not for a brand accent.", "section": "colors" },
+      { "name": "The Inversion-Is-Emphasis Rule", "body": "The only way to raise a block above its neighbours is to swap ground and ink: white background, black marks. Measured fact is what earns it. Because inversion is the entire emphasis budget, an inverted block on a screen that already has one must justify itself.", "section": "colors" },
+      { "name": "The Colourless Distinction Rule", "body": "No distinction may rest on colour alone — including the black/white pair. Fact and inference are separated four ways simultaneously: inversion, material (SOLID vs HAIRLINE), a literal chip reading SOLID/HAIRLINE, and the words FACT/INFERENCE in the track label. Removing any one of these must still leave the reader able to tell them apart. This is a product accessibility constraint, not a stylistic preference.", "section": "colors" },
+      { "name": "The Tabular Figure Rule", "body": "Every number on this page is set with font-variant-numeric: tabular-nums and font-feature-settings: \"tnum\" 1, applied via one class. Columns of figures must align on the digit; a ticking clock must not reflow its neighbours.", "section": "typography" },
+      { "name": "The Two-Face Rule", "body": "Martian Mono is for uppercase display and headline numbers; Azeret Mono is for everything a reader actually reads. A body paragraph never uses the display face, and a display heading never uses the data face. No third family is introduced — including for code, which uses the data face inverted.", "section": "typography" },
+      { "name": "The No-Kicker Rule", "body": "No eyebrow, kicker, or small uppercase label sits above a heading or a display number. Section headings are preceded only by an index numeral on the same baseline, and the label that names a track sits beside the material, never above the number. Uppercase labels exist in this system; a label used as a decorative pre-heading does not.", "section": "typography" },
+      { "name": "The Tracking Ladder Rule", "body": "Letter-spacing rises as size falls: -.01em at display, .02em at body, .10-.18em at label and micro. Wide tracking is how small uppercase type stays legible — it is not an ornament and is never applied at body size or above.", "section": "typography" },
+      { "name": "The Min-Width-Zero Rule", "body": "Every child of a CSS grid in this system carries min-width: 0. Grid items default to min-width: auto and are pushed open by their widest content — a wide table inside a 1fr column silently widened the whole section and, under body { overflow-x: hidden }, clipped the entire inference rail off-screen on mobile with no scrollbar to reveal it. Wide content scrolls inside its own panel; it never resizes its column.", "section": "layout" },
+      { "name": "The Instrument Panel Rule", "body": "Sections are numbered (01-05) and open with a three-part header on one baseline: index numeral, uppercase title, right-flushed lowercase note naming what the section is accountable for. A new section inherits this header or it does not belong on the page.", "section": "layout" },
+      { "name": "The Fact-Left Rule", "body": "Where fact and inference share a row, measured material takes the elastic column and computed material takes the fixed 260px rail. When the layout collapses, fact stacks first.", "section": "layout" },
+      { "name": "The No-Shadow Rule", "body": "Surfaces never lift off the ground. If an element needs to separate from its neighbour, give it a hairline border; if it needs to dominate them, invert it. A shadow — especially a hard offset one — is foreign to this world and would read as a different instrument.", "section": "elevation" },
+      { "name": "The Two-Weight Hairline Rule", "body": "Borders come in exactly two weights: rgba(255,255,255,.22) for anything that encloses, rgba(255,255,255,.10) for anything that merely divides. A third border tone is only admissible inside very dense tabular rows (.06), never as an enclosure.", "section": "elevation" },
+      { "name": "The Zero-Radius Rule", "body": "No element in this system has rounded corners, at any size, including chips, tags and inline code. A radius would soften a surface whose credibility comes from looking machined.", "section": "shapes" },
+      { "name": "The Three Materials Rule", "body": "Solid bars mean measured. Hairline strokes mean computed. 0/1 cells mean per-day state. A new chart picks one of these three and inherits its meaning; introducing a fourth material redefines the vocabulary and must be a deliberate act, not a chart-library default.", "section": "components" },
+      { "name": "The Computed-Not-Typed Rule", "body": "No published figure is typed into markup. Every number on the page — including the Weibull shape and scale, which are estimated in-page by method of moments — is derived at runtime from the single EVENTS array. A printed parameter that cannot reproduce the probability beside it is the defect this rule exists to prevent.", "section": "components" },
+      { "name": "The Honest Absence Rule", "body": "Data that does not exist reads NOT YET SCORED, INSUFFICIENT DATA, or an em dash. It never reads as a plausible number, a zero standing in for unknown, or an empty cell. Illustrative figures carry a SYNTHETIC tag on their section plus a sticky page banner.", "section": "components" },
+      { "name": "The One Authored Moment Rule", "body": "Motion is not ambient. The background field is a static material: it is built and drawn once, redrawn only on resize (debounced 150ms), and carries no animation loop. The system's motion budget is reserved for a single authored moment — a newly detected reset inverting the field — which is specified but not yet wired. prefers-reduced-motion: reduce kills all animation and transition globally.", "section": "components" },
+      { "name": "The True-Scale Rule", "body": "A mark's geometry reports its measurement. Interval bars are drawn at true axis scale and floored at 1.2 units only when the true width is sub-pixel, and the label says so; the hazard axis is scaled to the curve's own maximum so nothing is silently clipped against a fixed ceiling. Where geometry cannot carry the truth, the label carries it.", "section": "components" }
+    ],
+    "dos": [
+      "Do build every tone from white at reduced opacity or hairline density on #000000. The two pigments are #ffffff and #000000.",
+      "Do reserve inversion (white ground, black ink) for measured fact and for honesty apparatus (synthetic banner and tags).",
+      "Do give fact and inference at least three simultaneous non-colour separators: material, an explicit SOLID/HAIRLINE chip, and the literal words FACT and INFERENCE.",
+      "Do put min-width: 0 on every grid child, and let wide tables scroll inside their own panel.",
+      "Do set every figure with tabular numerals.",
+      "Do compute every published number at runtime from the event data, including model parameters.",
+      "Do write NOT YET SCORED / INSUFFICIENT DATA where a value does not exist, and tag any illustrative figure SYNTHETIC.",
+      "Do open each section with index numeral, uppercase title, and a right-flushed accountability note on one baseline.",
+      "Do define :hover and :focus-visible identically on every interactive element."
+    ],
+    "donts": [
+      "Don't introduce a grey token or any hue — no green for good, no red for alert, no brand accent.",
+      "Don't add a box-shadow of any kind; separation is a hairline, dominance is an inversion.",
+      "Don't add border-radius to anything, at any size.",
+      "Don't place an eyebrow, kicker, or decorative uppercase label above a heading or a display number.",
+      "Don't introduce a third type family, or set body copy in Martian Mono.",
+      "Don't run ambient or looping animation; motion belongs to a single authored event.",
+      "Don't widen a mark beyond its true measured scale to make it visible — floor it, and say in the label that you did.",
+      "Don't invent a fourth material to make a new chart type fit.",
+      "Don't let a second inverted block share a screen with the verdict block without a reason; inversion is the entire emphasis budget."
+    ]
+  }
+}

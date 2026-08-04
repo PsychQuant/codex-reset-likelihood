@@ -1,8 +1,11 @@
 # Brainstorming / design scratch (superpowers visual companion)
 .superpowers/
 
-# Impeccable local scratch (sketches, live-mode config)
-.impeccable/
+# Impeccable local scratch (sketches, live-mode config) — but the design
+# sidecar is the machine-readable half of DESIGN.md and belongs in version
+# control, so the detector can check the ship against the recorded system.
+.impeccable/*
+!.impeccable/design.json
 
 # Local collector state — holds the previous observation the discriminant
 # needs. Machine-local by design; must never be committed.
