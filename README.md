@@ -53,13 +53,19 @@ The server never holds anyone's OAuth token. That is also what makes crowd-sourc
 
 ## Deploy
 
+Live: **https://codex-reset-likelihood-f5iyx8nxm-psych-quant.vercel.app**
+
 ```shell
 make check      # pre-deploy gate
 make preview    # preview URL
-make deploy     # production
+make deploy     # production, then verify
+make verify     # confirm an anonymous visitor gets 200
+make unprotect  # disable Vercel Authentication
 ```
 
 Hosted on Vercel under the PsychQuant team. `make check` refuses to ship if the synthetic-data disclosure is missing, if a stale owner link survives, or if you are not logged in.
+
+`make verify` exists because of a real failure: a Vercel team project ships with Deployment Protection on, so the CLI reports `READY` while every anonymous visitor is bounced to an SSO login. **A deployment can be green and invisible at the same time.** `deploy` now runs `verify` automatically and fails loudly on a 302/307.
 
 ## Documents
 

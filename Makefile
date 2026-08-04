@@ -17,7 +17,7 @@ ORG     ?= PsychQuant
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check link preview deploy open logs shot clean
+.PHONY: help check link preview deploy verify unprotect open logs shot clean
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -44,8 +44,30 @@ link: ## Link this directory to the Vercel project (one-off)
 preview: check ## Deploy a preview URL
 	vercel deploy --scope $(SCOPE) --yes
 
-deploy: check ## Deploy to production
+deploy: check ## Deploy to production, then confirm the public can actually reach it
 	vercel deploy --prod --scope $(SCOPE) --yes
+	@$(MAKE) --no-print-directory verify
+
+verify: ## Confirm production returns 200 to an anonymous visitor
+	@url=$$(vercel ls --scope $(SCOPE) 2>/dev/null \
+	  | grep -oE 'https://[a-z0-9.-]+\.vercel\.app' | head -1); \
+	test -n "$$url" || { echo "FAIL  no deployment URL found"; exit 1; }; \
+	code=$$(curl -s -o /dev/null -w '%{http_code}' "$$url"); \
+	if [ "$$code" = "200" ]; then \
+	  echo "OK    $$url is publicly reachable (200)"; \
+	elif [ "$$code" = "307" ] || [ "$$code" = "302" ]; then \
+	  echo "FAIL  $$url returns $$code — Vercel Authentication is on, so"; \
+	  echo "      anonymous visitors get bounced to an SSO login page."; \
+	  echo "      A deployment can report READY and still be invisible."; \
+	  echo "      Fix: make unprotect"; exit 1; \
+	else \
+	  echo "FAIL  $$url returned $$code"; exit 1; fi
+
+unprotect: ## Disable Vercel Authentication (this site is meant to be public)
+	@pid=$$(python3 -c "import json;print(json.load(open('.vercel/project.json'))['projectId'])"); \
+	echo '{"ssoProtection":null}' \
+	  | vercel api "/v9/projects/$$pid" -X PATCH --input - --scope $(SCOPE) --silent \
+	  && echo "OK    Vercel Authentication disabled for $(PROJECT)"
 
 open: ## Open the project dashboard
 	vercel open --scope $(SCOPE)
