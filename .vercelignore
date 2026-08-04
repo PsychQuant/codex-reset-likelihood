@@ -1,0 +1,7 @@
+# Local scratch and machine-local state — never part of the public site.
+.collector-state/
+.superpowers/
+.impeccable/
+.DS_Store
+tests/
+Makefile

@@ -53,7 +53,7 @@ The server never holds anyone's OAuth token. That is also what makes crowd-sourc
 
 ## Deploy
 
-Live: **https://codex-reset-likelihood-f5iyx8nxm-psych-quant.vercel.app**
+Live: **https://codex-reset-likelihood.vercel.app**
 
 ```shell
 make check      # pre-deploy gate
