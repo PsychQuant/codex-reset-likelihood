@@ -12,8 +12,13 @@ Credentials are read from ~/.codex/auth.json and never leave this
 machine. Nothing token-shaped is ever written to the observation log.
 """
 
+import argparse
 import json
 import os
+import sys
+import time
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -228,3 +233,96 @@ def run_once(fetch, now, state_path, log_path):
             append_observation(log_path, build_observation(prev, curr, kind))
     save_state(state_path, curr)
     return 0
+
+
+USAGE_URL = "https://chatgpt.com/backend-api/wham/usage"
+USER_AGENT = "codex-reset-likelihood-collector/0.1"
+
+
+class AuthError(RuntimeError):
+    """~/.codex/auth.json is missing or not in the shape Codex writes."""
+
+
+class NetworkError(RuntimeError):
+    """The usage endpoint could not be reached or answered non-2xx."""
+
+
+def read_auth(auth_path):
+    """Return (access_token, account_id) from Codex's auth.json.
+
+    Both live NESTED under "tokens" — verified against the real file;
+    they are not top-level. The values are used for one request header
+    each and are never written anywhere.
+    """
+    path = Path(auth_path)
+    try:
+        with path.open(encoding="utf-8") as fh:
+            auth = json.load(fh)
+        tokens = auth["tokens"]
+        return tokens["access_token"], tokens["account_id"]
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise AuthError(
+            "cannot read credentials from %s: %r "
+            "(expected Codex auth.json with tokens.access_token / "
+            "tokens.account_id)" % (path, exc)
+        ) from exc
+
+
+def fetch_usage(token, account_id):
+    request = urllib.request.Request(
+        USAGE_URL,
+        headers={
+            "Authorization": "Bearer " + token,
+            "ChatGPT-Account-ID": account_id,
+            "User-Agent": USER_AGENT,
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return json.load(response)
+    except (urllib.error.URLError, OSError, ValueError) as exc:
+        raise NetworkError("usage endpoint unreachable: %r" % exc) from exc
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description="codex-reset-likelihood local collector (one poll "
+        "per invocation; drive it with cron/launchd)"
+    )
+    parser.add_argument(
+        "--auth", default=str(Path.home() / ".codex" / "auth.json")
+    )
+    parser.add_argument(
+        "--state",
+        default=".collector-state/last_observation.json",
+    )
+    parser.add_argument("--log", default="data/observations.jsonl")
+    args = parser.parse_args(argv)
+
+    try:
+        token, account_id = read_auth(args.auth)
+    except AuthError as exc:
+        print("auth error: %s" % exc, file=sys.stderr)
+        return 3
+
+    now = int(time.time())
+    try:
+        code = run_once(
+            lambda: fetch_usage(token, account_id), now, args.state, args.log
+        )
+    except NetworkError as exc:
+        print("network error: %s" % exc, file=sys.stderr)
+        return 4
+    except StateCorrupt as exc:
+        print("state error: %s" % exc, file=sys.stderr)
+        return 5
+
+    if code == 2:
+        print("schema drift recorded; inference must halt", file=sys.stderr)
+    else:
+        print("ok: observed at %s" % iso(now))
+    return code
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
