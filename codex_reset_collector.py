@@ -116,3 +116,47 @@ def classify(prev, curr):
     if curr["observed_at"] < prev["reset_at"]:
         return "bonus_reset"
     return "rollover"
+
+
+def build_observation(prev, curr, kind):
+    """One quota_jump Observation (spec section 5).
+
+    The payload carries the discriminant's complete input — the five
+    spec fields — so the classification can be recomputed by anyone
+    holding the log. classified_as is this collector's verdict; the
+    decision core recomputes its own and reports mismatches.
+    """
+    return {
+        "v": SCHEMA_VERSION,
+        "source": "self-account",
+        "observed_at": iso(curr["observed_at"]),
+        "occurred_at": [iso(prev["observed_at"]), iso(curr["observed_at"])],
+        "evidence_kind": "quota_jump",
+        "payload": {
+            "prev_observed_at": iso(prev["observed_at"]),
+            "prev_reset_at": iso(prev["reset_at"]),
+            "prev_remaining": 100 - prev["used_percent"],
+            "curr_remaining": 100 - curr["used_percent"],
+            "curr_reset_at": iso(curr["reset_at"]),
+            "window_source": curr["window_source"],
+            "classified_as": kind,
+        },
+        "signature": None,
+    }
+
+
+def build_drift_observation(observed_at, reason, top_level_keys):
+    """Record that upstream no longer matches the measured shape.
+
+    Key names only — never response values: a drifted payload could
+    contain anything, and this log is public.
+    """
+    return {
+        "v": SCHEMA_VERSION,
+        "source": "self-account",
+        "observed_at": iso(observed_at),
+        "occurred_at": [iso(observed_at), iso(observed_at)],
+        "evidence_kind": "schema_drift",
+        "payload": {"reason": reason, "top_level_keys": top_level_keys},
+        "signature": None,
+    }
