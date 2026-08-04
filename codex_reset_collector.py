@@ -13,7 +13,9 @@ machine. Nothing token-shaped is ever written to the observation log.
 """
 
 import json
+import os
 from datetime import datetime, timezone
+from pathlib import Path
 
 SCHEMA_VERSION = 1
 WEEKLY_SECONDS = 604800
@@ -160,3 +162,43 @@ def build_drift_observation(observed_at, reason, top_level_keys):
         "payload": {"reason": reason, "top_level_keys": top_level_keys},
         "signature": None,
     }
+
+
+class StateCorrupt(RuntimeError):
+    """The saved baseline could not be parsed.
+
+    Treating this as "no baseline" would silently discard the previous
+    observation and could swallow a real event — fail loud instead and
+    let the operator inspect or delete the file.
+    """
+
+
+def load_state(state_path):
+    path = Path(state_path)
+    if not path.exists():
+        return None
+    try:
+        with path.open(encoding="utf-8") as fh:
+            return json.load(fh)
+    except (ValueError, OSError) as exc:
+        raise StateCorrupt(
+            "cannot parse %s: %r — inspect or remove it" % (path, exc)
+        ) from exc
+
+
+def save_state(state_path, snapshot):
+    """Atomic write: a poll interrupted mid-save must not corrupt the
+    baseline the next discriminant run depends on."""
+    path = Path(state_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    with tmp.open("w", encoding="utf-8") as fh:
+        json.dump(snapshot, fh)
+    os.replace(tmp, path)
+
+
+def append_observation(log_path, obs):
+    path = Path(log_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(obs, separators=(",", ":")) + "\n")
